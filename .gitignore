@@ -1,0 +1,4 @@
+*.rar
+**/.vs/*
+**/bin/*
+**/TempFiles/*
