@@ -21,7 +21,7 @@ Flock::Flock(
 	, m_TrimWorld { trimWorld }
 	, m_pAgentToEvade{pAgentToEvade}
 	, m_NeighborhoodRadius{ 15 }
-	, m_NrOfNeighbors{0}
+	//, m_NrOfNeighbors{0}
 {
 	m_Agents.resize(m_FlockSize);
 
@@ -105,8 +105,10 @@ void Flock::Update(float deltaT)
 	{
 		if (m_Agents[i])
 		{
-			//m_pCellSpace->RegisterNeighbors(m_Agents[i], m_NeighborhoodRadius);
-			RegisterNeighbors(m_Agents[i]);
+			m_pCellSpace->RegisterNeighbors(m_Agents[i], m_NeighborhoodRadius,&m_Neighbors);
+			m_NrOfNeighbors = m_Neighbors.size();
+			//RegisterNeighbors(m_Agents[i]);
+
 			m_pCellSpace->UpdateAgentCell(m_Agents[i], m_Agents[i]->GetOldPos());
 			m_Agents[i]->Update(deltaT);
 
@@ -231,7 +233,7 @@ void Flock::RegisterNeighbors(SteeringAgent* pAgent)
 
 Elite::Vector2 Flock::GetAverageNeighborPos() const
 {
-	// TODO: Implement
+	
 	Elite::Vector2 average{};
 	for (size_t i = 0; i < m_Neighbors.size(); ++i)
 	{
@@ -244,7 +246,7 @@ Elite::Vector2 Flock::GetAverageNeighborPos() const
 
 Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 {
-	// TODO: Implement
+	
 	Elite::Vector2 averageSpeed{};
 	for (size_t i = 0; i < m_Neighbors.size(); ++i)
 	{

@@ -68,15 +68,15 @@ void CellSpace::UpdateAgentCell(SteeringAgent* agent, Elite::Vector2 oldPos)
 	}
 }
 
-void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius)
+void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius, std::vector<SteeringAgent*>* neighbors)
 {
-	m_NrOfNeighbors = 0;
+	neighbors->clear();
 	float cellWidth = m_SpaceWidth / m_NrOfCols;
 	float cellHeight = m_SpaceHeight / m_NrOfRows;
-	int rb = Elite::Clamp( int((agent->GetPosition().x - queryRadius)/cellWidth),0,m_NrOfRows-1);
-	int re = Elite::Clamp( int((agent->GetPosition().x + queryRadius)/cellWidth),0,m_NrOfRows-1);
-	int cb = Elite::Clamp( int((agent->GetPosition().y - queryRadius)/cellHeight),0,m_NrOfCols-1);
-	int ce = Elite::Clamp( int((agent->GetPosition().y + queryRadius)/cellHeight),0,m_NrOfCols-1);
+	int cb = Elite::Clamp( int((agent->GetPosition().x - queryRadius)/cellWidth),0,m_NrOfRows-1);
+	int ce = Elite::Clamp( int((agent->GetPosition().x + queryRadius)/cellWidth),0,m_NrOfRows-1);
+	int rb = Elite::Clamp( int((agent->GetPosition().y - queryRadius)/cellHeight),0,m_NrOfCols-1);
+	int re = Elite::Clamp( int((agent->GetPosition().y + queryRadius)/cellHeight),0,m_NrOfCols-1);
 	for(int r = rb; r<= re; ++r)
 	{
 		for(int c = cb; c<= ce ; ++c)
@@ -89,8 +89,8 @@ void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius)
 					Elite::Vector2 ToAgent{ pAgent->GetPosition() - pAgent->GetPosition() };
 					if (ToAgent.Magnitude() < queryRadius)
 					{
-						m_Neighbors.push_back(pAgent);
-						++m_NrOfNeighbors;
+						neighbors->push_back(pAgent);
+						
 					}
 				}
 			}

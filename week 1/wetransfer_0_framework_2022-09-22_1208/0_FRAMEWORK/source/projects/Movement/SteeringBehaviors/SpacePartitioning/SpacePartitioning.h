@@ -41,7 +41,7 @@ public:
 	void AddAgent(SteeringAgent* agent);
 	void UpdateAgentCell(SteeringAgent* agent, Elite::Vector2 oldPos);
 
-	void RegisterNeighbors(SteeringAgent* agent, float queryRadius);
+	void RegisterNeighbors(SteeringAgent* agent, float queryRadius, std::vector<SteeringAgent*>* neighbors);
 	const std::vector<SteeringAgent*>& GetNeighbors() const { return m_Neighbors; }
 	int GetNrOfNeighbors() const { return m_NrOfNeighbors; }
 
