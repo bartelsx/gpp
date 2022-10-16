@@ -74,6 +74,7 @@ Flock::~Flock()
 	SAFE_DELETE(m_pVelMatchBehavior);
 	SAFE_DELETE(m_pAgentToEvade);
 	SAFE_DELETE(m_pSeek);
+	SAFE_DELETE(m_pEvadeBehavior);
 
 
 	for(auto pAgent: m_Agents)
