@@ -33,7 +33,7 @@ Flock::Flock(
 	m_pVelMatchBehavior = new VelocityMatch(this);
 	m_pEvadeBehavior = new EvadeFlock(this);
 
-	
+	m_pCellSpace = new CellSpace(m_WorldSize, m_WorldSize, m_Rows, m_Cols, m_FlockSize);
 
 	std::vector< BlendedSteering::WeightedBehavior> vecWeightedB{ { m_pCohesionBehavior, 5 },
 		{ m_pSeparationBehavior, 6 }, { m_pVelMatchBehavior, 1 } };
@@ -50,6 +50,7 @@ Flock::Flock(
 		m_Agents[i]->SetMaxLinearSpeed(100.0f);
 		m_Agents[i]->SetMass(0.3f);
 		m_Agents[i]->SetPosition({ float(rand() % int(worldSize + 1)), float(rand() % int(worldSize + 1)) });
+		m_pCellSpace->AddAgent(m_Agents[i]);
 	}
 
 
@@ -82,6 +83,8 @@ Flock::~Flock()
 		SAFE_DELETE(pAgent);
 	}
 	m_Agents.clear();
+	m_pCellSpace->EmptyCells();
+	SAFE_DELETE(m_pCellSpace);
 }
 
 void Flock::Update(float deltaT)
@@ -102,9 +105,10 @@ void Flock::Update(float deltaT)
 	{
 		if (m_Agents[i])
 		{
+			//m_pCellSpace->RegisterNeighbors(m_Agents[i], m_NeighborhoodRadius);
 			RegisterNeighbors(m_Agents[i]);
+			m_pCellSpace->UpdateAgentCell(m_Agents[i], m_Agents[i]->GetOldPos());
 			m_Agents[i]->Update(deltaT);
-			m_Agents[i]->GetSteeringBehavior()->CalculateSteering(deltaT, m_Agents[i]);
 
 			if (m_TrimWorld)
 			{
@@ -119,11 +123,13 @@ void Flock::Update(float deltaT)
 					//DEBUGRENDERER2D->DrawPoint(this->GetAverageNeighborPos(), 10, { 0,1,0 });
 					DEBUGRENDERER2D->DrawCircle(m_Agents[i]->GetPosition(), m_NeighborhoodRadius, { 1,0,0 }, -0.8f);
 					DEBUGRENDERER2D->DrawPoint(GetAverageNeighborPos(), 5, { 0,1,0 }, -0.8f);
+					
 				}
 			}
 			m_Neighbors.clear();
 		}
 	}
+	m_pCellSpace->RenderCells();
 	m_pSeek->SetTarget(m_MouseTarget);
 	m_pAgentToEvade->Update(deltaT);
 	if (m_TrimWorld)

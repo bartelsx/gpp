@@ -20,7 +20,7 @@ void SteeringAgent::Update(float dt)
 			//DEBUGRENDERER2D->DrawDirection(GetPosition(), linVel, linVel.Magnitude(), { 1, 0, 1 ,0.5f }, 0.40f);
 		}
 		SetLinearVelocity(linVel + (acceleration*dt));
-
+	
 		//Angular Movement
 		//****************
 		if(m_AutoOrient)
@@ -34,6 +34,7 @@ void SteeringAgent::Update(float dt)
 				output.AngularVelocity = m_MaxAngularSpeed;
 			SetAngularVelocity(output.AngularVelocity);
 		}
+		m_OldPos = GetPosition();
 	}
 }
 

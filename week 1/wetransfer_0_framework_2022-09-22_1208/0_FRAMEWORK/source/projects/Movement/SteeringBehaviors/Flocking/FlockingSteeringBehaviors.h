@@ -44,7 +44,7 @@ public:
 private:
 	Flock* m_pFlock = nullptr;
 };
-//VELOCITY MATCH - FLOCKING
+//Evade - FLOCKING
 //************************
 class EvadeFlock : public ISteeringBehavior
 {

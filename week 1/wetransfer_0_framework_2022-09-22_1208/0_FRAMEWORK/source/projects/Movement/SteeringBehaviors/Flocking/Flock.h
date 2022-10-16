@@ -1,6 +1,7 @@
 #pragma once
 #include "../SteeringHelpers.h"
 #include "FlockingSteeringBehaviors.h"
+#include "projects/Movement/SteeringBehaviors/SpacePartitioning/SpacePartitioning.h"
 
 class ISteeringBehavior;
 class SteeringAgent;
@@ -47,6 +48,9 @@ private:
 	std::vector<SteeringAgent*> m_Agents;
 	std::vector<SteeringAgent*> m_Neighbors;
 
+	const int m_Rows{13};
+	const int m_Cols{13};
+
 	bool m_TrimWorld = false;
 	float m_WorldSize = 0.f;
 
@@ -69,7 +73,9 @@ private:
 
 	BlendedSteering* m_pBlendedSteering = nullptr;
 	PrioritySteering* m_pPrioritySteering = nullptr;
-	
+
+	CellSpace* m_pCellSpace = nullptr;
+
 	float* GetWeight(ISteeringBehavior* pBehaviour);
 
 	Flock(const Flock& other);

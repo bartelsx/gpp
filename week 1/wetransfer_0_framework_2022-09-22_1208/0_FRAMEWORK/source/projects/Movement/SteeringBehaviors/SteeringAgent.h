@@ -42,7 +42,7 @@ public:
 
 	void SetRenderBehavior(bool isEnabled) { m_RenderBehavior = isEnabled; }
 	bool CanRenderBehavior() const { return m_RenderBehavior; }
-	
+	Elite::Vector2 GetOldPos() { return m_OldPos; }
 
 protected:
 	//--- Datamembers ---
@@ -52,5 +52,6 @@ protected:
 	float m_MaxAngularSpeed = 10.f;
 	bool m_AutoOrient = false;
 	bool m_RenderBehavior = false;
+	Elite::Vector2 m_OldPos{};
 };
 #endif
