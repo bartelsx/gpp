@@ -6,6 +6,12 @@ class ISteeringBehavior;
 class SteeringAgent;
 class BlendedSteering;
 class PrioritySteering;
+class Seek;
+class Separation;
+class Cohesion;
+class VelocityMatch;
+class Wander;
+class EvadeFlock;
 
 class Flock final
 {
@@ -22,6 +28,8 @@ public:
 	void UpdateAndRenderUI() ;
 	void Render(float deltaT);
 
+	SteeringAgent* GetAgentToEvade() const;
+
 	void RegisterNeighbors(SteeringAgent* pAgent);
 	int GetNrOfNeighbors() const { return m_NrOfNeighbors; }
 	const std::vector<SteeringAgent*>& GetNeighbors() const { return m_Neighbors; }
@@ -34,6 +42,7 @@ public:
 
 private:
 	//Datamembers
+
 	int m_FlockSize = 0;
 	std::vector<SteeringAgent*> m_Agents;
 	std::vector<SteeringAgent*> m_Neighbors;
@@ -46,20 +55,25 @@ private:
 
 	SteeringAgent* m_pAgentToEvade = nullptr;
 	
+	TargetData m_MouseTarget = {};
+	bool m_UseMouseTarget = false;
+	bool m_VisualizeMouseTarget = true;
+
 	//Steering Behaviors
-	//Seek* m_pSeekBehavior = nullptr;
-	Seperation* m_pSeparationBehavior = nullptr;
+	Separation* m_pSeparationBehavior = nullptr;
 	Cohesion* m_pCohesionBehavior = nullptr;
 	VelocityMatch* m_pVelMatchBehavior = nullptr;
-	//Wander* m_pWanderBehavior = nullptr;
-	//Evade* m_pEvadeBehavior = nullptr;
+	Wander* m_pWanderBehavior = nullptr;
+	EvadeFlock* m_pEvadeBehavior = nullptr;
+	Seek* m_pSeek = nullptr;
 
 	BlendedSteering* m_pBlendedSteering = nullptr;
 	PrioritySteering* m_pPrioritySteering = nullptr;
-
+	
 	float* GetWeight(ISteeringBehavior* pBehaviour);
 
-private:
 	Flock(const Flock& other);
 	Flock& operator=(const Flock& other);
 };
+
+

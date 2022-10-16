@@ -36,9 +36,9 @@ SteeringOutput Flee::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 		steering.IsValid = false;
 		return steering;
 	}
-	steering.LinearVelocity = m_Target.Position - pAgent->GetPosition();
+	steering.LinearVelocity = toTarget;
 	steering.LinearVelocity.Normalize();
-	steering.LinearVelocity *= -pAgent->GetMaxLinearSpeed();
+	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
 
 	if (pAgent->CanRenderBehavior())
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, 5, { 0,1,0 });
@@ -62,7 +62,7 @@ SteeringOutput Arrive::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	//stops turning
 	if (distance < arrivalRadius)
 	{
-		steering.LinearVelocity = { 0.f,0.f };
+		steering.LinearVelocity = Elite::Vector2{  0.f,0.f };
 		return steering;
 	}
 
@@ -91,8 +91,6 @@ SteeringOutput Face::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	const Elite::Vector2 toTarget{m_Target.Position - pAgent->GetPosition()};
 	const float angle{180 / float(M_PI) * pAgent->GetRotation()};
 	const float angleTarget{ 180 / float(M_PI) * atan2(toTarget.y, toTarget.x) };
-
-	//std::cout << angle << "  " << angleTarget << '\n';
 
 	if(angle - angleTarget > 5) steering.AngularVelocity = -5;
 	else if (angle - angleTarget < -5) steering.AngularVelocity = 5;
@@ -138,19 +136,14 @@ SteeringOutput Wander::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 //****
 SteeringOutput Pursuit::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
-	//pAgent->SetAutoOrient(false);
-
+	
 	SteeringOutput steering = {};
 
-	//Elite::Vector2 toTarget{ m_Target.Position - pAgent->GetPosition() };
-	//float dToTarget{toTarget.Magnitude()};
-	//Elite::Vector2 speedTarget{ m_Target.LinearVelocity };
-
-	m_Vec = { ( m_Target.Position - pAgent->GetPosition()) + m_Target.LinearVelocity};
+	m_Vec = {  m_Target.Position - pAgent->GetPosition() + m_Target.LinearVelocity};
 	steering.LinearVelocity = m_Vec;
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
-	m_Target.GetDirection();
+
 	if (pAgent->CanRenderBehavior())
 	{
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), (m_Target.Position - pAgent->GetPosition()), 5, { 0,1,0 });
@@ -166,13 +159,21 @@ SteeringOutput Evade::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	SteeringOutput steering = {};
 
-	Elite::Vector2 evadingVec{ (pAgent->GetPosition() - m_Target.Position) + m_Target.LinearVelocity };
-	steering.LinearVelocity = evadingVec;
-	steering.LinearVelocity.Normalize();
-	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
-
+	Elite::Vector2 evadingVec{ pAgent->GetPosition() - (m_Target.Position + m_Target.LinearVelocity)};
+	if(evadingVec.Magnitude() < 10.f)
+	{
+		
+		steering.LinearVelocity = evadingVec;
+		steering.LinearVelocity.Normalize();
+		steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
+		steering.IsValid = true;
+	}else
+	{
+		steering.IsValid = false;
+	}
 	if (pAgent->CanRenderBehavior())
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, 5, { 0,1,0 });
+		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), evadingVec, 5, { 1,0,0 });
 
 	return steering;
 }

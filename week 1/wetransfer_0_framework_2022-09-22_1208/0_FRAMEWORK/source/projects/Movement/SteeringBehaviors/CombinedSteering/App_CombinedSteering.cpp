@@ -10,7 +10,7 @@
 using namespace Elite;
 App_CombinedSteering::~App_CombinedSteering()
 {	
-	SAFE_DELETE(m_pDrunkAgent);
+	SAFE_DELETE(m_pSeekAgent);
 	SAFE_DELETE(m_pBlenderSteering);
 	SAFE_DELETE(m_pDrunkWander);
 	SAFE_DELETE(m_pSeek);
@@ -34,12 +34,12 @@ void App_CombinedSteering::Start()
 	m_pDrunkWander->SetWanderOffset(0);
 	m_pBlenderSteering = new BlendedSteering({{ m_pSeek,0.5f }, { m_pDrunkWander, 0.5f }});
 
-	m_pDrunkAgent = new SteeringAgent();
-	m_pDrunkAgent->SetSteeringBehavior(m_pSeek);
-	m_pDrunkAgent->SetMaxLinearSpeed(15.0f);
-	m_pDrunkAgent->SetAutoOrient(true);
-	m_pDrunkAgent->SetBodyColor({ 1.f, 0.f, 0.f });
-	m_pDrunkAgent->SetMass(0.3f);
+	m_pSeekAgent = new SteeringAgent();
+	m_pSeekAgent->SetSteeringBehavior(m_pSeek);
+	m_pSeekAgent->SetMaxLinearSpeed(15.0f);
+	m_pSeekAgent->SetAutoOrient(true);
+	m_pSeekAgent->SetBodyColor({ 1.f, 0.f, 0.f });
+	m_pSeekAgent->SetMass(0.3f);
 
 	m_pSoberWander = new Wander;
 	m_pFlee = new Flee;
@@ -48,10 +48,11 @@ void App_CombinedSteering::Start()
 	m_pEvade = new Evade();
 	m_pEvadingAgent = new SteeringAgent();
 	m_pEvadingAgent->SetSteeringBehavior(m_pEvade);
-	m_pEvadingAgent->SetMaxLinearSpeed(15.0f);
+	m_pEvadingAgent->SetMaxLinearSpeed(10.0f);
 	m_pEvadingAgent->SetAutoOrient(true);
 	m_pEvadingAgent->SetBodyColor({ 0.f, 1.f, 0.f });
-	m_pDrunkAgent->SetMass(0.3f);
+	m_pEvadingAgent->SetPosition(Elite::Vector2{ 50.f,50.f });
+	m_pSeekAgent->SetMass(0.3f);
 }
 
 
@@ -129,20 +130,19 @@ void App_CombinedSteering::Update(float deltaTime)
 	#pragma endregion
 #endif
 	m_pSeek->SetTarget(m_MouseTarget);
-	m_pDrunkAgent->Update(deltaTime);
+	m_pSeekAgent->Update(deltaTime);
+	m_pEvade->SetTarget(m_pSeekAgent->GetPosition());
+	m_pEvadingAgent->Update(deltaTime);
 	if(m_TrimWorld)
 	{
-		m_pDrunkAgent->TrimToWorld(m_TrimWorldSize);
+		m_pSeekAgent->TrimToWorld(m_TrimWorldSize);
 		m_pEvadingAgent->TrimToWorld(m_TrimWorldSize);
 		
 	}
-	m_pDrunkAgent->GetSteeringBehavior()->CalculateSteering(deltaTime, m_pDrunkAgent);
-	m_pEvadingAgent->GetSteeringBehavior()->CalculateSteering(deltaTime, m_pEvadingAgent);
-	m_pEvadingAgent->Update(deltaTime);
 
 	/*TargetData evadeTarget;
-	evadeTarget.LinearVelocity = m_pDrunkAgent->GetLinearVelocity();
-	evadeTarget.Position = m_pDrunkAgent->GetPosition();
+	evadeTarget.LinearVelocity = m_pSeekAgent->GetLinearVelocity();
+	evadeTarget.Position = m_pSeekAgent->GetPosition();
 
 	m_pFlee->SetTarget(evadeTarget);*/
 
@@ -150,20 +150,20 @@ void App_CombinedSteering::Update(float deltaTime)
 
 void App_CombinedSteering::Render(float deltaTime) const
 {
-	m_pDrunkAgent->Render(deltaTime);
-	m_pDrunkAgent->SetRenderBehavior(m_CanDebugRender);
+	m_pSeekAgent->SetRenderBehavior(m_CanDebugRender);
+	m_pSeekAgent->Render(deltaTime);
 
-	m_pEvadingAgent->Render(deltaTime);
 	m_pEvadingAgent->SetRenderBehavior(m_CanDebugRender);
+	m_pEvadingAgent->Render(deltaTime);
 
 	if (m_TrimWorld)
 	{
 		RenderWorldBounds(m_TrimWorldSize);
 		m_pEvadingAgent->TrimToWorld(m_TrimWorldSize);
 	}
-	DEBUGRENDERER2D->DrawDirection(m_pEvadingAgent->GetPosition(), (m_pDrunkAgent->GetLinearVelocity() - m_pEvadingAgent->GetLinearVelocity()), 10.f, Color(255, 0, 0));
-	DEBUGRENDERER2D->DrawDirection(m_pEvadingAgent->GetPosition(), (m_pDrunkAgent->GetPosition() - m_pEvadingAgent->GetPosition()), 10.f, Color(0, 255, 0));
-	DEBUGRENDERER2D->DrawDirection(m_pEvadingAgent->GetPosition(), (m_pDrunkAgent->GetPosition() - m_pEvadingAgent->GetPosition())+ (m_pDrunkAgent->GetLinearVelocity() - m_pEvadingAgent->GetLinearVelocity()), 10.f, Color(0, 0, 255));
+	//DEBUGRENDERER2D->DrawDirection(m_pEvadingAgent->GetPosition(), (m_pSeekAgent->GetLinearVelocity() - m_pEvadingAgent->GetLinearVelocity()), 10.f, Color(255, 0, 0));
+	//DEBUGRENDERER2D->DrawDirection(m_pEvadingAgent->GetPosition(), (m_pSeekAgent->GetPosition() - m_pEvadingAgent->GetPosition()), 10.f, Color(0, 255, 0));
+	//DEBUGRENDERER2D->DrawDirection(m_pEvadingAgent->GetPosition(), (m_pSeekAgent->GetPosition() - m_pEvadingAgent->GetPosition())+ (m_pSeekAgent->GetLinearVelocity() - m_pEvadingAgent->GetLinearVelocity()), 10.f, Color(0, 0, 255));
 
 
 	//Render Target

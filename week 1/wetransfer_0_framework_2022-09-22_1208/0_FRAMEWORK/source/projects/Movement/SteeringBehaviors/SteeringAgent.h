@@ -42,6 +42,7 @@ public:
 
 	void SetRenderBehavior(bool isEnabled) { m_RenderBehavior = isEnabled; }
 	bool CanRenderBehavior() const { return m_RenderBehavior; }
+	
 
 protected:
 	//--- Datamembers ---

@@ -7,6 +7,8 @@
 
 using namespace Elite;
 
+
+
 //Constructor & Destructor
 Flock::Flock(
 	int flockSize /*= 50*/, 
@@ -27,23 +29,38 @@ Flock::Flock(
 	//m_pBlendedSteering = new BlendedSteering()
 	
 	m_pCohesionBehavior = new Cohesion(this);
-	m_pSeparationBehavior = new Seperation(this);
+	m_pSeparationBehavior = new Separation(this);
 	m_pVelMatchBehavior = new VelocityMatch(this);
+	m_pEvadeBehavior = new EvadeFlock(this);
+
+	
 
 	std::vector< BlendedSteering::WeightedBehavior> vecWeightedB{ { m_pCohesionBehavior, 5 },
 		{ m_pSeparationBehavior, 6 }, { m_pVelMatchBehavior, 1 } };
 	m_pBlendedSteering = new BlendedSteering{ vecWeightedB };
 
+	std::vector<ISteeringBehavior*> priority_steerings{ m_pEvadeBehavior ,m_pBlendedSteering };
+	m_pPrioritySteering =  new PrioritySteering(priority_steerings) ;
+
 	for (int i = 0; i < m_FlockSize; ++i)
 	{
 		m_Agents[i] = new SteeringAgent();
-		m_Agents[i]->SetSteeringBehavior(m_pBlendedSteering);
+		m_Agents[i]->SetSteeringBehavior(m_pPrioritySteering);
 		m_Agents[i]->SetAutoOrient(true);
 		m_Agents[i]->SetMaxLinearSpeed(100.0f);
 		m_Agents[i]->SetMass(0.3f);
 		m_Agents[i]->SetPosition({ float(rand() % int(worldSize + 1)), float(rand() % int(worldSize + 1)) });
 	}
-	
+
+
+	m_pSeek = new Seek();
+	m_pAgentToEvade = new SteeringAgent();
+	m_pAgentToEvade->SetSteeringBehavior(m_pSeek);
+	m_pAgentToEvade->SetMaxLinearSpeed(15.0f);
+	m_pAgentToEvade->SetAutoOrient(true);
+	m_pAgentToEvade->SetBodyColor({ 1.f, 0.f, 0.f });
+	m_pAgentToEvade->SetMass(0.3f);
+
 }
 
 Flock::~Flock()
@@ -55,6 +72,9 @@ Flock::~Flock()
 	SAFE_DELETE(m_pCohesionBehavior);
 	SAFE_DELETE(m_pSeparationBehavior);
 	SAFE_DELETE(m_pVelMatchBehavior);
+	SAFE_DELETE(m_pAgentToEvade);
+	SAFE_DELETE(m_pSeek);
+
 
 	for(auto pAgent: m_Agents)
 	{
@@ -70,6 +90,12 @@ void Flock::Update(float deltaT)
 		// register its neighbors	(-> memory pool is filled with neighbors of the currently evaluated agent)
 		// update it				(-> the behaviors can use the neighbors stored in the pool, next iteration they will be the next agent's neighbors)
 		// trim it to the world
+	if (INPUTMANAGER->IsMouseButtonUp(InputMouseButton::eLeft) && m_VisualizeMouseTarget)
+	{
+		auto const mouseData = INPUTMANAGER->GetMouseData(InputType::eMouseButton, InputMouseButton::eLeft);
+		m_MouseTarget.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+	}
+
 
 	for (size_t i = 0; i < m_FlockSize; ++i)
 	{
@@ -97,7 +123,12 @@ void Flock::Update(float deltaT)
 			m_Neighbors.clear();
 		}
 	}
-
+	m_pSeek->SetTarget(m_MouseTarget);
+	m_pAgentToEvade->Update(deltaT);
+	if (m_TrimWorld)
+	{
+		m_pAgentToEvade->TrimToWorld(m_WorldSize);
+	}
 
 }
 
@@ -111,7 +142,8 @@ void Flock::Render(float deltaT)
 			m_Agents[i]->Render(deltaT);
 		}
 	}
-	
+	//m_pAgentToEvade->SetRenderBehavior(m_CanDebugRender);
+	m_pAgentToEvade->Render(deltaT);
 
 
 }
@@ -158,16 +190,19 @@ void Flock::UpdateAndRenderUI()
 	ImGui::SliderFloat("Weight Cohesion", GetWeight(m_pCohesionBehavior), 0, 10);
 	ImGui::SliderFloat("Weight Separation", GetWeight(m_pSeparationBehavior), 0, 10);
 	ImGui::SliderFloat("Weight MatchVelocity", GetWeight(m_pVelMatchBehavior), 0, 10);
+	
 
 	//End
 	ImGui::PopAllowKeyboardFocus();
 	ImGui::End();
-	
+
+
+
 }
 
 void Flock::RegisterNeighbors(SteeringAgent* pAgent)
 {
-	// TODO: Implement
+	
 	m_NrOfNeighbors = 0;
 	
 	for (int i = 0; i < m_FlockSize; ++i)
@@ -237,4 +272,10 @@ float* Flock::GetWeight(ISteeringBehavior* pBehavior)
 	}
 
 	return nullptr;
+}
+
+SteeringAgent*  Flock::GetAgentToEvade() const
+{
+	return m_pAgentToEvade;
+
 }

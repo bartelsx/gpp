@@ -4,8 +4,8 @@
 
 //#define ActiveApp_Sandbox
 //#define ActiveApp_Steering
-#define ActiveApp_CombinedSteering
-//#define ActiveApp_Flocking
+//#define ActiveApp_CombinedSteering
+#define ActiveApp_Flocking
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
 #include "projects/Movement/Sandbox/App_Sandbox.h"
