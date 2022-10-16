@@ -73,10 +73,13 @@ void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius, std::
 	neighbors->clear();
 	float cellWidth = m_SpaceWidth / m_NrOfCols;
 	float cellHeight = m_SpaceHeight / m_NrOfRows;
-	int cb = Elite::Clamp( int((agent->GetPosition().x - queryRadius)/cellWidth),0,m_NrOfRows-1);
-	int ce = Elite::Clamp( int((agent->GetPosition().x + queryRadius)/cellWidth),0,m_NrOfRows-1);
-	int rb = Elite::Clamp( int((agent->GetPosition().y - queryRadius)/cellHeight),0,m_NrOfCols-1);
-	int re = Elite::Clamp( int((agent->GetPosition().y + queryRadius)/cellHeight),0,m_NrOfCols-1);
+
+	auto pos = agent->GetPosition();
+
+	int cb = Elite::Clamp( int((pos.x - queryRadius)/cellWidth),0,m_NrOfRows-1);
+	int ce = Elite::Clamp( int((pos.x + queryRadius)/cellWidth),0,m_NrOfRows-1);
+	int rb = Elite::Clamp( int((pos.y - queryRadius)/cellHeight),0,m_NrOfCols-1);
+	int re = Elite::Clamp( int((pos.y + queryRadius)/cellHeight),0,m_NrOfCols-1);
 	for(int r = rb; r<= re; ++r)
 	{
 		for(int c = cb; c<= ce ; ++c)
@@ -86,7 +89,7 @@ void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius, std::
 			{
 				if (agent != pAgent)
 				{
-					Elite::Vector2 ToAgent{ pAgent->GetPosition() - pAgent->GetPosition() };
+					Elite::Vector2 ToAgent{ pos - pAgent->GetPosition() };
 					if (ToAgent.Magnitude() < queryRadius)
 					{
 						neighbors->push_back(pAgent);
@@ -96,7 +99,6 @@ void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius, std::
 			}
 		}
 	}
-	
 }
 
 void CellSpace::EmptyCells()
@@ -112,7 +114,7 @@ void CellSpace::RenderCells() const
 	{
 		std::vector<Elite::Vector2> points = m_Cells[index].GetRectPoints();
 		auto polygon = Elite::Polygon{ points };
-		DEBUGRENDERER2D->DrawPolygon(&polygon,{1,0,0});
+		DEBUGRENDERER2D->DrawPolygon(&polygon,{1,0,0}, 1.f);
 		auto number = std::to_string( m_Cells[index].agents.size());
 	
 		DEBUGRENDERER2D->DrawString(m_Cells[index].boundingBox.bottomLeft + Elite::Vector2{ offset,m_Cells[index].boundingBox.height-offset }, number.c_str());
@@ -121,15 +123,23 @@ void CellSpace::RenderCells() const
 
 int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 {
-	int column = int(pos.x/(m_SpaceWidth / m_NrOfCols));
+	int column = int(pos.x / (m_SpaceWidth / m_NrOfCols));
 	if(column >= m_NrOfCols)
 	{
 		column = m_NrOfCols - 1;
+	}
+	if (column < 0)
+	{
+		column = 0;
 	}
 	int row = int(pos.y / (m_SpaceHeight / m_NrOfRows));
 	if (row >= m_NrOfRows)
 	{
 		row = m_NrOfRows - 1;
+	}
+	if (row < 0)
+	{
+		row = 0;
 	}
 	return row * m_NrOfCols+column;
 }

@@ -41,7 +41,7 @@ public:
 
 protected:
 	RigidBody* m_pRigidBody = nullptr;
-	float m_Radius = 1.f;
+	float m_Radius =0.5f;
 	Elite::Color m_BodyColor = { 1,1,0,1 };
 
 private:

@@ -108,6 +108,7 @@
       <AdditionalDependencies>Box2D32d.lib;SDL2main.lib;SDL2.lib;winmm.lib;version.lib;opengl32.lib;vld.lib;IMGUI_LIB32d.lib;GPP_PluginBase_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)..\lib\SDL2.dll" "$(OutDir)" /y /D</Command>

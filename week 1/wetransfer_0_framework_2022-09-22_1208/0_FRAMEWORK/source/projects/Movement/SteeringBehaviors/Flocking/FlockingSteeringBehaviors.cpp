@@ -72,9 +72,9 @@ SteeringOutput EvadeFlock::CalculateSteering(float deltaT, SteeringAgent* pAgent
 	{
 		steering.IsValid = false;
 	}
-	if (pAgent->CanRenderBehavior())
+	/*if (pAgent->CanRenderBehavior())
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, 5, { 0,1,0 });
-	DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), evadingVec, 5, { 1,0,0 });
+	DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), evadingVec, 5, { 1,0,0 });*/
 
 	return steering;
 }

@@ -48,8 +48,8 @@ private:
 	std::vector<SteeringAgent*> m_Agents;
 	std::vector<SteeringAgent*> m_Neighbors;
 
-	const int m_Rows{13};
-	const int m_Cols{13};
+	const int m_Rows{25};
+	const int m_Cols{25};
 
 	bool m_TrimWorld = false;
 	float m_WorldSize = 0.f;
@@ -62,6 +62,9 @@ private:
 	TargetData m_MouseTarget = {};
 	bool m_UseMouseTarget = false;
 	bool m_VisualizeMouseTarget = true;
+	bool m_DebugRender = false;
+	bool m_Partitioning = true;
+	bool m_DebugPartitioning = false;
 
 	//Steering Behaviors
 	Separation* m_pSeparationBehavior = nullptr;
