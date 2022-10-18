@@ -38,7 +38,7 @@ Flock::Flock(
 	m_pCellSpace = new CellSpace(m_WorldSize, m_WorldSize, m_Rows, m_Cols, m_FlockSize);
 
 	std::vector< BlendedSteering::WeightedBehavior> vecWeightedB{ { m_pCohesionBehavior, 5 },
-		{ m_pSeparationBehavior, 6 }, { m_pVelMatchBehavior, 1 } , { m_pSeek, 5}, {m_pWanderBehavior, 0} };
+		{ m_pSeparationBehavior, 6 }, { m_pVelMatchBehavior, 1 } , { m_pSeek, 0}, {m_pWanderBehavior, 0} };
 	m_pBlendedSteering = new BlendedSteering{ vecWeightedB };
 
 	std::vector<ISteeringBehavior*> priority_steerings{ m_pEvadeBehavior ,m_pBlendedSteering };
