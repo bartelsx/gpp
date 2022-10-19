@@ -177,15 +177,15 @@ void Flock::Update(float deltaT)
 	if (m_DebugPartitioning)
 	{
 		m_pCellSpace->RenderCells();
+		
 	}
-
-	m_pSeek->SetTarget(m_MouseTarget);
+	SetTarget_Seek(m_MouseTarget);
+	
 	m_pAgentToEvade->Update(deltaT);
 	if (m_TrimWorld)
 	{
 		m_pAgentToEvade->TrimToWorld(m_WorldSize);
 	}
-
 }
 
 void Flock::Render(float deltaT)
@@ -197,13 +197,8 @@ void Flock::Render(float deltaT)
 		{
 			m_Agents[i]->Render(deltaT);
 		}
-
-
 	}
-	//m_pAgentToEvade->SetRenderBehavior(m_CanDebugRender);
 	m_pAgentToEvade->Render(deltaT);
-
-
 }
 
 void Flock::UpdateAndRenderUI()
@@ -250,7 +245,7 @@ void Flock::UpdateAndRenderUI()
 	ImGui::SliderFloat("Weight MatchVelocity", GetWeight(m_pVelMatchBehavior), 0, 10);
 	ImGui::SliderFloat("Weight Seek", GetWeight(m_pSeek), 0, 10);
 	ImGui::SliderFloat("Weight Wander", GetWeight(m_pWanderBehavior), 0, 10);
-
+	
 	ImGui::Checkbox("Debug render", &m_DebugRender);
 	ImGui::Checkbox("Space Partitioning", &m_Partitioning);
 	ImGui::Checkbox("Draw Debug Space Partitioning", &m_DebugPartitioning);
@@ -258,9 +253,7 @@ void Flock::UpdateAndRenderUI()
 	//End
 	ImGui::PopAllowKeyboardFocus();
 	ImGui::End();
-
-
-
+	
 }
 
 void Flock::RegisterNeighbors(SteeringAgent* pAgent)
@@ -313,7 +306,8 @@ Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 
 void Flock::SetTarget_Seek(TargetData target)
 {
-	// TODO: Set target for seek behavior
+	m_pSeek->SetTarget(m_MouseTarget);
+
 }
 
 
