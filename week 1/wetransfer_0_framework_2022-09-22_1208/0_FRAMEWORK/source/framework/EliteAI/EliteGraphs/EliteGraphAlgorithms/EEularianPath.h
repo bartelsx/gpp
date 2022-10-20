@@ -91,6 +91,33 @@ namespace Elite
 		// Start algorithm loop
 		std::stack<int> nodeStack;
 
+		int startNode{};
+		int nrEvenNodes{};
+		int nrOddNodes{};
+
+			if(eulerianity == Eulerianity::eulerian)
+			{
+				startNode = 0;
+			}
+			else if (eulerianity == Eulerianity::semiEulerian)
+			{
+				for (int i{}; i<nrOfNodes;++i)
+				{
+					if(graphCopy->GetNodeConnections(i).size() & 1)
+					{
+						startNode = i;
+						break;
+					}
+				}
+			}
+			else { return{}; }
+			
+			if(graphCopy->GetNodeConnections(startNode).size()>0)
+			{
+				nodeStack.push(startNode);
+				graphCopy->GetNodeConnections(startNode).begin();
+			}
+		
 
 		std::reverse(path.begin(), path.end()); // reverses order of the path
 		return path;
