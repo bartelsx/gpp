@@ -28,6 +28,11 @@
     <ClCompile Include="projects\Movement\SteeringBehaviors\Flocking\Flock.cpp" />
     <ClCompile Include="projects\Movement\SteeringBehaviors\Flocking\FlockingSteeringBehaviors.cpp" />
     <ClCompile Include="projects\Movement\SteeringBehaviors\SpacePartitioning\SpacePartitioning.cpp" />
+    <ClCompile Include="projects\Movement\Pathfinding\GraphTheory\App_GraphTheory.cpp" />
+    <ClCompile Include="framework\EliteAI\EliteGraphs\EGraphConnectionTypes.cpp" />
+    <ClCompile Include="framework\EliteAI\EliteGraphs\EGraphNodeTypes.cpp" />
+    <ClCompile Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphEditor.cpp" />
+    <ClCompile Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="projects\App_Selector.h" />
@@ -89,6 +94,17 @@
     <ClInclude Include="projects\Movement\SteeringBehaviors\Flocking\Flock.h" />
     <ClInclude Include="projects\Movement\SteeringBehaviors\Flocking\FlockingSteeringBehaviors.h" />
     <ClInclude Include="projects\Movement\SteeringBehaviors\SpacePartitioning\SpacePartitioning.h" />
+    <ClInclude Include="projects\Movement\Pathfinding\GraphTheory\App_GraphTheory.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EGraph2D.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EGraphConnectionTypes.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EGraphEnums.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EGraphNodeTypes.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EGridGraph.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EIGraph.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EliteGraphAlgorithms\EEularianPath.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphEditor.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphRenderer.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphVisuals.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />

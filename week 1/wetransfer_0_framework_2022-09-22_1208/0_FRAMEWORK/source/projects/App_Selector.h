@@ -5,7 +5,8 @@
 //#define ActiveApp_Sandbox
 //#define ActiveApp_Steering
 //#define ActiveApp_CombinedSteering
-#define ActiveApp_Flocking
+//#define ActiveApp_Flocking
+#define ActiveApp_GraphTheory
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
 #include "projects/Movement/Sandbox/App_Sandbox.h"
@@ -25,6 +26,11 @@ typedef App_CombinedSteering CurrentApp;
 #ifdef ActiveApp_Flocking
 #include "projects/Movement/SteeringBehaviors/Flocking/App_Flocking.h"
 typedef App_Flocking CurrentApp;
+#endif//ActiveApp_Flocking
+
+#ifdef ActiveApp_GraphTheory
+#include "projects/Movement/Pathfinding/GraphTheory/App_GraphTheory.h"
+typedef App_GraphTheory CurrentApp;
 #endif//ActiveApp_Flocking
 
 class App_Selector {
