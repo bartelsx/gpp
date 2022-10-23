@@ -9,6 +9,7 @@
 #include "framework\EliteAI\EliteGraphs\EGraphConnectionTypes.h"
 #include "framework\EliteAI\EliteGraphs\EGridGraph.h"
 #include "framework\EliteAI\EliteGraphs\EGraph2D.h"
+#include "framework/EliteAI/EliteGraphs/EliteGraphAlgorithms/EGraphColorizer.h"
 #include "framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphRenderer.h"
 #include "framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphEditor.h"
 
@@ -36,5 +37,7 @@ private:
 	//C++ make the class non-copyable
 	App_GraphTheory(const App_GraphTheory&) = delete;
 	App_GraphTheory& operator=(const App_GraphTheory&) = delete;
+
+	EGraphColorizer<Elite::GraphNode2D, Elite::GraphConnection2D> m_Colorizer{};
 };
 #endif

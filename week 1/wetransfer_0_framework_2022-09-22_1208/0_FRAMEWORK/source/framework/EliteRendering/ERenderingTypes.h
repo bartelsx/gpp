@@ -12,6 +12,7 @@ namespace Elite
 	//Basic color
 	struct Color final
 	{
+	public:
 		//=== Datamembers ===
 		float r = 0.f, g = 0.f, b = 0.f, a = 1.f;
 
@@ -21,6 +22,9 @@ namespace Elite
 		{
 			r = _r; g = _g; b = _b; a = _a;
 		}
+
+		bool operator==(const Color& other) const { return other.r == r && other.g == g && other.b == b && other.a == a; } 
+		bool operator!=(const Color& other) const { return !(*this == other); }
 	};
 	//Basic vertex
 	struct Vertex final

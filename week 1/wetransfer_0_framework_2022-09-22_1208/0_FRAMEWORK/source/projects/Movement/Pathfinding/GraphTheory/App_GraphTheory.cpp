@@ -35,63 +35,7 @@ void App_GraphTheory::Update(float deltaTime)
 	m_GraphEditor.UpdateGraph(M_PGraph2D);
 	M_PGraph2D->SetConnectionCostsToDistance();
 	
-
-	auto eulerFinder = EulerianPath<GraphNode2D, GraphConnection2D>(M_PGraph2D);
-	Eulerianity eulerianity;
-	eulerianity = eulerFinder.IsEulerian();
-	switch (eulerianity)
-	{
-	case Eulerianity::notEulerian:
-		cout << "not eulerian" << '\n';
-		break;
-	case Eulerianity::semiEulerian:
-		cout << "semi eulerian" << '\n';
-		break;
-	case Eulerianity::eulerian:
-		cout << " eulerian" << '\n';
-		break;
-	default:
-		break;
-	}
-
-	//show path
-	auto path = eulerFinder.FindPath(eulerianity);
-	if(path.size() > 1)
-	{
-		int coloredConnections = int(m_TotalTime) % (path.size());
-		for(int index{ int(path.size()-2 )}; index >= 0 ; --index)
-		{
-			auto connection = M_PGraph2D->GetConnection(path[index]->GetIndex(), path[index + 1]->GetIndex());
-			connection->SetColor(coloredConnections > 0 ? Color{ 1.f,0.f,0.f } : Color{ 1.f,1.f,1.f });
-			connection = M_PGraph2D->GetConnection(path[index+1]->GetIndex(), path[index]->GetIndex());
-			connection->SetColor(coloredConnections > 0 ? Color{ 1.f,0.f,0.f } : Color{ 1.f,1.f,1.f });
-			//cout << connection->GetFrom() << ", " << connection->GetTo() << ", " << coloredConnections <<", " << connection << ", "<< (coloredConnections > 0) << '\n';
-			--coloredConnections;
-		}
-	}
-	else
-	{
-		for(auto node : M_PGraph2D->GetAllNodes())
-		{
-			for(auto connection : M_PGraph2D->GetNodeConnections(node))
-			{
-				connection->SetColor(Color{});
-			}
-		}
-	}
-
-	//reveal odd nodes
-	for(auto node : M_PGraph2D->GetAllNodes())
-	{
-		if(M_PGraph2D->GetNodeConnections(node).size() & 1 )
-		{
-			node->SetColor(Color{ 1.f,0,0 });
-		}
-		else
-		{
-			node->SetColor(Color{ 1.f,1.f,1.f });
-		}
-	}
+	m_Colorizer.Colorize(M_PGraph2D);
 	
 	//------- UI --------
 #ifdef PLATFORM_WINDOWS
