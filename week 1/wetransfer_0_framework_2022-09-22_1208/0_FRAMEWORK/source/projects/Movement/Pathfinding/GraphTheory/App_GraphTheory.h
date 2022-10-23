@@ -30,7 +30,7 @@ public:
 
 private:
 	Elite::Graph2D<Elite::GraphNode2D, Elite::GraphConnection2D>* M_PGraph2D;
-
+	float m_TotalTime{};
 	Elite::GraphEditor m_GraphEditor{};
 	Elite::GraphRenderer m_Graphrenderer{};
 	//C++ make the class non-copyable

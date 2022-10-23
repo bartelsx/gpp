@@ -94,7 +94,7 @@ namespace Elite
 		int startNode{};
 		int nrEvenNodes{};
 		int nrOddNodes{};
-
+		
 			if(eulerianity == Eulerianity::eulerian)
 			{
 				startNode = 0;
@@ -111,12 +111,30 @@ namespace Elite
 				}
 			}
 			else { return{}; }
-			
-			if(graphCopy->GetNodeConnections(startNode).size()>0)
+
+			auto currentNode = startNode;
+
+			while (graphCopy->GetNodeConnections(currentNode).size() > 0 || !(nodeStack.empty()) )
 			{
-				nodeStack.push(startNode);
-				graphCopy->GetNodeConnections(startNode).begin();
+				if (graphCopy->GetNodeConnections(currentNode).size() > 0)
+				{
+					nodeStack.push(currentNode);
+					auto connectionList = graphCopy->GetNodeConnections(currentNode);
+					auto firstConnection = static_cast<Elite::GraphConnection2D>(connectionList.front()[0]);
+					
+					currentNode = firstConnection.GetFrom() == currentNode ? firstConnection.GetTo() : firstConnection.GetFrom();
+					graphCopy->RemoveConnection(firstConnection.GetFrom(), firstConnection.GetTo());
+					
+				}
+				else
+				{
+					path.push_back(m_pGraph->GetNode(currentNode));
+					currentNode = nodeStack.top();
+					nodeStack.pop();
+				}
 			}
+		
+			path.push_back(m_pGraph->GetNode(currentNode));
 		
 
 		std::reverse(path.begin(), path.end()); // reverses order of the path
