@@ -6,7 +6,8 @@
 //#define ActiveApp_Steering
 //#define ActiveApp_CombinedSteering
 //#define ActiveApp_Flocking
-#define ActiveApp_GraphTheory
+//#define ActiveApp_GraphTheory
+#define ActiveApp_AStar
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
 #include "projects/Movement/Sandbox/App_Sandbox.h"
@@ -31,6 +32,11 @@ typedef App_Flocking CurrentApp;
 #ifdef ActiveApp_GraphTheory
 #include "projects/Movement/Pathfinding/GraphTheory/App_GraphTheory.h"
 typedef App_GraphTheory CurrentApp;
+#endif//ActiveApp_Flocking
+
+#ifdef ActiveApp_AStar
+#include "projects/Movement/Pathfinding/AStar/App_PathfindingAStar/App_PathfindingAStar.h"
+typedef App_PathfindingAStar CurrentApp;
 #endif//ActiveApp_Flocking
 
 class App_Selector {
