@@ -28,15 +28,15 @@ namespace Elite
 
         while (openList.empty() == false)
         {
-            T_NodeType* pCurrenNode = openList.front();
+            T_NodeType* pCurrentNode = openList.front();
             openList.pop();
 
-            if (pCurrenNode == pDestinationNode)
+            if (pCurrentNode == pDestinationNode)
             {
                 break;
             }
 
-            for (auto& connection : m_pGraph->GetNodeConnections(pCurrenNode))
+            for (auto& connection : m_pGraph->GetNodeConnections(pCurrentNode))
             {
                 T_NodeType* pNextNode = m_pGraph->GetNode(connection->GetTo());
 
@@ -44,7 +44,7 @@ namespace Elite
                 if (closedList.find(pNextNode) == closedList.end())
                 {
                     openList.push(pNextNode);
-                    closedList[pNextNode] = pCurrenNode;
+                    closedList[pNextNode] = pCurrentNode;
                 }
             }
         }

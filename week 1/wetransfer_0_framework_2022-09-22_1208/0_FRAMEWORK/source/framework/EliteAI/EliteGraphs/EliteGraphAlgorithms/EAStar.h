@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 
 namespace Elite
 {
@@ -49,7 +50,86 @@ namespace Elite
 	template <class T_NodeType, class T_ConnectionType>
 	std::vector<T_NodeType*> AStar<T_NodeType, T_ConnectionType>::FindPath(T_NodeType* pStartNode, T_NodeType* pGoalNode)
 	{
-		return std::vector<T_NodeType*>();
+		std::vector<T_NodeType*> path;
+		std::vector<NodeRecord>  openList;
+		std::vector<NodeRecord> closedList;
+		NodeRecord currentRecord;
+
+		//1
+		openList.push_back(NodeRecord{ pStartNode, nullptr, 0.f, GetHeuristicCost(pStartNode, pGoalNode) });
+
+		//2
+		while ( ! openList.empty())
+		{
+			//2.A
+			currentRecord = *std::min_element(openList.begin(), openList.end());
+
+			//2.B
+			if (currentRecord.pNode == pGoalNode)
+			{
+				break;
+			}
+
+			//2.C
+			for (T_ConnectionType* const pConnection : m_pGraph->GetNodeConnections(currentRecord.pNode))
+			{
+				//2.D
+				T_NodeType* pNode = m_pGraph->GetNode(pConnection->GetTo());
+
+				auto pExistingNodeRecord = std::find_if(closedList.begin(), closedList.end(), [&](NodeRecord x) {return  x.pNode == pNode; });
+				if (pExistingNodeRecord != closedList.end())
+				{
+					if ((* pExistingNodeRecord).costSoFar < currentRecord.costSoFar)
+					{
+						continue;
+					}
+					else
+					{
+						closedList.erase(std::remove(closedList.begin(), closedList.end(), *pExistingNodeRecord));
+					}
+				}
+				else
+				{
+					//2.E
+					pExistingNodeRecord = std::find_if(openList.begin(), openList.end(), [&](NodeRecord x) {return  x.pNode == pNode; });
+					if (pExistingNodeRecord != openList.end())
+					{
+						if ((*pExistingNodeRecord).costSoFar < currentRecord.costSoFar)
+						{
+							continue;
+						}
+						else
+						{
+							openList.erase(std::remove(openList.begin(), openList.end(), *pExistingNodeRecord));
+						}
+					}
+				}
+
+				//2.F
+				openList.push_back(NodeRecord{pNode, pConnection, currentRecord.costSoFar+1, currentRecord.costSoFar+1+GetHeuristicCost(pNode, pGoalNode)});
+			}
+
+			//2.G
+			openList.erase(std::remove(openList.begin(), openList.end(), currentRecord));
+			closedList.push_back(currentRecord);
+
+		}
+
+		while (currentRecord.pNode != pStartNode)
+		{
+			path.push_back(currentRecord.pNode);
+			T_NodeType* pStartNode = m_pGraph->GetNode(currentRecord.pConnection->GetFrom());
+			auto x = std::find_if(closedList.begin(), closedList.end(), [&](NodeRecord x) {return  x.pNode == pStartNode; });
+			if (x != closedList.end())
+			{
+				currentRecord = *x;
+			}
+		}
+		path.push_back(pStartNode);
+
+		std::reverse(path.begin(), end(path));
+
+		return path;
 	}
 
 	template <class T_NodeType, class T_ConnectionType>
