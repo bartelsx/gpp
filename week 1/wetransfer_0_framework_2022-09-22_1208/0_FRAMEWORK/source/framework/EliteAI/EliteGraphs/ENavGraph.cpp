@@ -53,9 +53,51 @@ Elite::Polygon* Elite::NavGraph::GetNavMeshPolygon() const
 void Elite::NavGraph::CreateNavigationGraph()
 {
 	//1. Go over all the edges of the navigationmesh and create nodes
+	//1.A
+	for (auto pLine : m_pNavMeshPolygon->GetLines())
+	{
+		auto triangles = m_pNavMeshPolygon->GetTrianglesFromLineIndex(pLine->index);
+		if (triangles.size() > 1)
+		{
+			auto pNode = new NavGraphNode{ GetNextFreeNodeIndex(), pLine->index, (pLine->p1 + pLine->p2) / 2};
+			AddNode(pNode);
+		}
+	}
+
+	//1.B
+	for (auto pTriangle : m_pNavMeshPolygon->GetTriangles())
+	{
+		std::vector<int> nodeIndices{};
+		for (auto lineIdx : pTriangle->metaData.IndexLines)
+		{
+			int nodeIdx{ GetNodeIdxFromLineIdx(lineIdx) };
+			if (nodeIdx != invalid_node_index)
+			{
+				nodeIndices.push_back(nodeIdx);
+			}
+		}
+
+		if (nodeIndices.size() >= 2)
+		{
+			auto pCon = new GraphConnection2D{ nodeIndices[0], nodeIndices[1] };
+			AddConnection(pCon);
+
+			if (nodeIndices.size() == 3)
+			{
+				pCon = new GraphConnection2D{ nodeIndices[1], nodeIndices[2] };
+				AddConnection(pCon);
+				pCon = new GraphConnection2D{ nodeIndices[2], nodeIndices[0] };
+				AddConnection(pCon);
+			}
+		}
+	}
+
+	//1.C
+	SetConnectionCostsToDistance();
 	
 	//2. Create connections now that every node is created
 	
 	//3. Set the connections cost to the actual distance
+
 }
 

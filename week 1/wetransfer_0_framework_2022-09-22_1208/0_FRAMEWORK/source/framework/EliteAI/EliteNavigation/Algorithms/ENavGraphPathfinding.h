@@ -16,7 +16,58 @@ namespace Elite
 			std::vector<Vector2> finalPath{};
 
 			//Get the start and endTriangle
-		
+			auto pStartTriangle =pNavGraph->GetNavMeshPolygon()->GetTriangleFromPosition(startPos);
+			auto pEndTriangle =pNavGraph->GetNavMeshPolygon()->GetTriangleFromPosition(endPos);
+
+			NavGraphNode* pStartNode{};
+			NavGraphNode* pEndNode{};
+			
+			if (pStartTriangle != nullptr && pEndTriangle != nullptr)
+			{
+				if (pStartTriangle == pEndTriangle)
+				{
+					finalPath.push_back(endPos);
+				}
+				else
+				{
+					std::shared_ptr<IGraph<NavGraphNode, GraphConnection2D>> pClone = pNavGraph->Clone();
+
+					for (auto lineIdx : pStartTriangle->metaData.IndexLines)
+					{
+						int nodeIdx = pNavGraph->GetNodeIdxFromLineIdx(lineIdx);
+						if (nodeIdx != invalid_node_index)
+						{
+							auto pNode = pClone->GetNode(nodeIdx);
+							pStartNode = new NavGraphNode{ pClone->GetNextFreeNodeIndex(), -1, startPos };
+							int startNodeIdx = pClone->AddNode(pStartNode);
+							pClone->AddConnection(new GraphConnection2D{startNodeIdx, nodeIdx, Distance(startPos, pNode->GetPosition())});
+						}
+					}
+
+					for (auto lineIdx : pEndTriangle->metaData.IndexLines)
+					{
+						int nodeIdx = pNavGraph->GetNodeIdxFromLineIdx(lineIdx);
+						if (nodeIdx != invalid_node_index)
+						{
+							auto pNode = pClone->GetNode(nodeIdx);
+							pEndNode = new NavGraphNode{ pClone->GetNextFreeNodeIndex(), -1, endPos };
+							int endNodeIdx = pClone->AddNode(pEndNode);
+							pClone->AddConnection(new GraphConnection2D{endNodeIdx, nodeIdx, Distance(endPos, pNode->GetPosition()) });
+						}
+					}
+
+					auto aStar = AStar<NavGraphNode, GraphConnection2D>(&(*pClone), Elite::HeuristicFunctions::Euclidean);
+					auto path{ aStar.FindPath(pStartNode, pEndNode) };
+
+					debugNodePositions.clear();
+					for (auto pNode : path)
+					{
+						debugNodePositions.push_back(pNode->GetPosition());
+						finalPath.push_back(pNode->GetPosition());
+					}
+				}
+			}
+
 			//We have valid start/end triangles and they are not the same
 			//=> Start looking for a path
 			//Copy the graph
