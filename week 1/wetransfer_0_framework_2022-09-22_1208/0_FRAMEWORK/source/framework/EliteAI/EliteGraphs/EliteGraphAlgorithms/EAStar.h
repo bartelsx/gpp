@@ -83,10 +83,6 @@ namespace Elite
 					{
 						continue;
 					}
-					else
-					{
-						closedList.erase(std::remove(closedList.begin(), closedList.end(), *pExistingNodeRecord));
-					}
 				}
 				else
 				{
@@ -106,7 +102,7 @@ namespace Elite
 				}
 
 				//2.F
-				openList.push_back(NodeRecord{pNode, pConnection, currentRecord.costSoFar+1, currentRecord.costSoFar+1+GetHeuristicCost(pNode, pGoalNode)});
+				openList.push_back(NodeRecord{pNode, pConnection, currentRecord.costSoFar+pConnection->GetCost(), currentRecord.costSoFar + 1 + GetHeuristicCost(pNode, pGoalNode)});
 			}
 
 			//2.G
