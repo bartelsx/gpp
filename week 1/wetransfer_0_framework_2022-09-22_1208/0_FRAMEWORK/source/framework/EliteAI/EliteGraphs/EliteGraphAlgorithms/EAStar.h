@@ -59,7 +59,7 @@ namespace Elite
 		openList.push_back(NodeRecord{ pStartNode, nullptr, 0.f, GetHeuristicCost(pStartNode, pGoalNode) });
 
 		//2
-		while ( ! openList.empty())
+		while (!openList.empty())
 		{
 			//2.A
 			currentRecord = *std::min_element(openList.begin(), openList.end());
@@ -79,7 +79,7 @@ namespace Elite
 				auto pExistingNodeRecord = std::find_if(closedList.begin(), closedList.end(), [&](NodeRecord x) {return  x.pNode == pNode; });
 				if (pExistingNodeRecord != closedList.end())
 				{
-					if ((* pExistingNodeRecord).costSoFar < currentRecord.costSoFar)
+					if ((*pExistingNodeRecord).costSoFar < currentRecord.costSoFar)
 					{
 						continue;
 					}
@@ -102,7 +102,7 @@ namespace Elite
 				}
 
 				//2.F
-				openList.push_back(NodeRecord{pNode, pConnection, currentRecord.costSoFar+pConnection->GetCost(), currentRecord.costSoFar + 1 + GetHeuristicCost(pNode, pGoalNode)});
+				openList.push_back(NodeRecord{ pNode, pConnection, currentRecord.costSoFar + pConnection->GetCost(), currentRecord.costSoFar + 1 + GetHeuristicCost(pNode, pGoalNode) });
 			}
 
 			//2.G
@@ -111,19 +111,23 @@ namespace Elite
 
 		}
 
-		while (currentRecord.pNode != pStartNode)
+		if (currentRecord.pNode == pGoalNode)
 		{
-			path.push_back(currentRecord.pNode);
-			T_NodeType* pStartNode = m_pGraph->GetNode(currentRecord.pConnection->GetFrom());
-			auto x = std::find_if(closedList.begin(), closedList.end(), [&](NodeRecord x) {return  x.pNode == pStartNode; });
-			if (x != closedList.end())
-			{
-				currentRecord = *x;
-			}
-		}
-		path.push_back(pStartNode);
 
-		std::reverse(path.begin(), end(path));
+			while (currentRecord.pNode != pStartNode)
+			{
+				path.push_back(currentRecord.pNode);
+				T_NodeType* pStartNode = m_pGraph->GetNode(currentRecord.pConnection->GetFrom());
+				auto x = std::find_if(closedList.begin(), closedList.end(), [&](NodeRecord x) {return  x.pNode == pStartNode; });
+				if (x != closedList.end())
+				{
+					currentRecord = *x;
+				}
+			}
+			path.push_back(pStartNode);
+
+			std::reverse(path.begin(), end(path));
+		}
 
 		return path;
 	}
