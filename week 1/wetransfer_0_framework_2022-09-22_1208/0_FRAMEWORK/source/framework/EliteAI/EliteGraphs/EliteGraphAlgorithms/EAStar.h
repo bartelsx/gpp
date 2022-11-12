@@ -1,6 +1,8 @@
 #pragma once
 #include <algorithm>
 
+#include "framework/EliteAI/EliteNavigation/ENavigation.h"
+
 namespace Elite
 {
 	template <class T_NodeType, class T_ConnectionType>

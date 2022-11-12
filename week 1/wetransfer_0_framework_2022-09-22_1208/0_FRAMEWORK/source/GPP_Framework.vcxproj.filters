@@ -34,6 +34,9 @@
     <ClCompile Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphEditor.cpp" />
     <ClCompile Include="framework\EliteAI\EliteGraphs\EliteGraphUtilities\EGraphRenderer.cpp" />
     <ClCompile Include="projects\Movement\Pathfinding\AStar\App_PathfindingAStar\App_PathfindingAStar.cpp" />
+    <ClCompile Include="framework\EliteAI\EliteGraphs\ENavGraph.cpp" />
+    <ClCompile Include="projects\Movement\Pathfinding\NavMeshGraph\App_NavMeshGraph.cpp" />
+    <ClCompile Include="projects\Shared\NavigationColliderElement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="projects\App_Selector.h" />
@@ -111,6 +114,11 @@
     <ClInclude Include="framework\EliteAI\EliteNavigation\EHeuristicFunctions.h" />
     <ClInclude Include="framework\EliteAI\EliteNavigation\ENavigation.h" />
     <ClInclude Include="projects\Movement\Pathfinding\AStar\App_PathfindingAStar\App_PathfindingAStar.h" />
+    <ClInclude Include="framework\EliteAI\EliteGraphs\ENavGraph.h" />
+    <ClInclude Include="framework\EliteAI\EliteNavigation\Algorithms\ENavGraphPathfinding.h" />
+    <ClInclude Include="framework\EliteAI\EliteNavigation\Algorithms\EPathSmoothing.h" />
+    <ClInclude Include="projects\Movement\Pathfinding\NavMeshGraph\App_NavMeshGraph.h" />
+    <ClInclude Include="projects\Shared\NavigationColliderElement.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />
