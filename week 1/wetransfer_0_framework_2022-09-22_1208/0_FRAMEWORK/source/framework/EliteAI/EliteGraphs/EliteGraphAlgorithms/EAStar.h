@@ -78,10 +78,12 @@ namespace Elite
 				//2.D
 				T_NodeType* pNode = m_pGraph->GetNode(pConnection->GetTo());
 
+				auto newRecord = NodeRecord{ pNode, pConnection, currentRecord.costSoFar + pConnection->GetCost(), currentRecord.costSoFar + pConnection->GetCost() + GetHeuristicCost(pNode, pGoalNode) };
 				auto pExistingNodeRecord = std::find_if(closedList.begin(), closedList.end(), [&](NodeRecord x) {return  x.pNode == pNode; });
+
 				if (pExistingNodeRecord != closedList.end())
 				{
-					if ((*pExistingNodeRecord).costSoFar < currentRecord.costSoFar)
+					if ((*pExistingNodeRecord).costSoFar <  newRecord.costSoFar)
 					{
 						continue;
 					}
@@ -92,7 +94,7 @@ namespace Elite
 					pExistingNodeRecord = std::find_if(openList.begin(), openList.end(), [&](NodeRecord x) {return  x.pNode == pNode; });
 					if (pExistingNodeRecord != openList.end())
 					{
-						if ((*pExistingNodeRecord).costSoFar < currentRecord.costSoFar)
+						if ((*pExistingNodeRecord).costSoFar <  newRecord.costSoFar)
 						{
 							continue;
 						}
@@ -104,7 +106,7 @@ namespace Elite
 				}
 
 				//2.F
-				openList.push_back(NodeRecord{ pNode, pConnection, currentRecord.costSoFar + pConnection->GetCost(), currentRecord.costSoFar + 1 + GetHeuristicCost(pNode, pGoalNode) });
+				openList.push_back(newRecord);
 			}
 
 			//2.G

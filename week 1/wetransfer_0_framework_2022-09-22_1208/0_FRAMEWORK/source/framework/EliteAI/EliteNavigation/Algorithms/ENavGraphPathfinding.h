@@ -32,14 +32,18 @@ namespace Elite
 				{
 					std::shared_ptr<IGraph<NavGraphNode, GraphConnection2D>> pClone = pNavGraph->Clone();
 
+					pStartNode = new NavGraphNode{ pClone->GetNextFreeNodeIndex(), -1, startPos };
+					int startNodeIdx = pClone->AddNode(pStartNode);
+
+					pEndNode = new NavGraphNode{ pClone->GetNextFreeNodeIndex(), -1, endPos };
+					int endNodeIdx = pClone->AddNode(pEndNode);
+
 					for (auto lineIdx : pStartTriangle->metaData.IndexLines)
 					{
 						int nodeIdx = pNavGraph->GetNodeIdxFromLineIdx(lineIdx);
 						if (nodeIdx != invalid_node_index)
 						{
 							auto pNode = pClone->GetNode(nodeIdx);
-							pStartNode = new NavGraphNode{ pClone->GetNextFreeNodeIndex(), -1, startPos };
-							int startNodeIdx = pClone->AddNode(pStartNode);
 							pClone->AddConnection(new GraphConnection2D{startNodeIdx, nodeIdx, Distance(startPos, pNode->GetPosition())});
 						}
 					}
@@ -50,8 +54,6 @@ namespace Elite
 						if (nodeIdx != invalid_node_index)
 						{
 							auto pNode = pClone->GetNode(nodeIdx);
-							pEndNode = new NavGraphNode{ pClone->GetNextFreeNodeIndex(), -1, endPos };
-							int endNodeIdx = pClone->AddNode(pEndNode);
 							pClone->AddConnection(new GraphConnection2D{endNodeIdx, nodeIdx, Distance(endPos, pNode->GetPosition()) });
 						}
 					}
@@ -59,12 +61,16 @@ namespace Elite
 					auto aStar = AStar<NavGraphNode, GraphConnection2D>(&(*pClone), Elite::HeuristicFunctions::Euclidean);
 					auto path{ aStar.FindPath(pStartNode, pEndNode) };
 
+					auto portals{ SSFA::FindPortals(path, pNavGraph->GetNavMeshPolygon()) };
+					finalPath = SSFA::OptimizePortals(portals);
+
 					debugNodePositions.clear();
 					for (auto pNode : path)
 					{
+						//finalPath.push_back(pNode->GetPosition());
 						debugNodePositions.push_back(pNode->GetPosition());
-						finalPath.push_back(pNode->GetPosition());
 					}
+					debugPortals = portals;
 				}
 			}
 

@@ -83,18 +83,78 @@ namespace Elite
 
 				//--- RIGHT CHECK ---
 				//1. See if moving funnel inwards - RIGHT
+				Vector2 newRight = portal.Line.p1 - apexPos;
+				float crossRight = rightLeg.Cross(newRight);
 
-					//2. See if new line degenerates a line segment - RIGHT
+				//2. See if new line degenerates a line segment - RIGHT
+				if (crossRight >= 0.f)
+				{
+					//Right leg going inwards
+					float crossLeft = leftLeg.Cross(newRight);
+					if (crossLeft <= 0.f)
+					{
+						//Not crossing over left leg
+						rightLeg = newRight;
+						rightLegIdx = portalIdx;
+					}
+					else
+					{
+						//Crossing over left leg
+						apexPos += leftLeg;
+						apexIdx = leftLegIdx;
+						portalIdx = leftLegIdx + 1;
+						leftLegIdx = rightLegIdx = portalIdx;
+						vPath.push_back(apexPos);
 
+						if (portalIdx < amtPortals)
+						{
+							rightLeg = portals[rightLegIdx].Line.p1 - apexPos;
+							leftLeg = portals[leftLegIdx].Line.p2 - apexPos;
+							continue;
+						}
+						
+					}
+				}
 
 				//--- LEFT CHECK ---
 				//1. See if moving funnel inwards - LEFT
+				Vector2 newLeft = portal.Line.p2 - apexPos;
+				float crossLeft = leftLeg.Cross(newLeft);
 
-					//2. See if new line degenerates a line segment - LEFT
+				//2. See if new line degenerates a line segment - RIGHT
+				if (crossLeft <= 0.f)
+				{
+					//Right leg going inwards
+					float crossRight = rightLeg.Cross(newLeft);
+					if (crossRight >= 0.f)
+					{
+						//Not crossing over right leg
+						leftLeg = newLeft;
+						leftLegIdx = portalIdx;
+					}
+					else
+					{
+						//Crossing over right leg
+						apexPos += rightLeg;
+						apexIdx = rightLegIdx;
+						portalIdx = rightLegIdx + 1;
+						leftLegIdx = rightLegIdx = portalIdx;
+						vPath.push_back(apexPos);
+
+						if (portalIdx < amtPortals)
+						{
+							rightLeg = portals[rightLegIdx].Line.p1 - apexPos;
+							leftLeg = portals[leftLegIdx].Line.p2 - apexPos;
+							continue;
+						}
+
+					}
+				}
 
 			}
 
 			// Add last path point (You can use the last portal p1 or p2 points as both are equal to the endPoint of the path
+			vPath.push_back(portals[amtPortals - 1].Line.p1);
 
 			return vPath;
 		}
