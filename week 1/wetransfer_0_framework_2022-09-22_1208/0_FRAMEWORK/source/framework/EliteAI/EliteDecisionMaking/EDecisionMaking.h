@@ -29,6 +29,7 @@ namespace Elite
 /* --- Decision Making Structures --- */
 //FSM & BT
 #include "framework/EliteAI/EliteDecisionMaking/EliteFiniteStateMachine/EFiniteStateMachine.h"
+#include "framework/EliteAI/EliteDecisionMaking/EliteBehaviorTree/EBehaviorTree.h"
 
 
 #endif

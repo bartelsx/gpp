@@ -8,8 +8,10 @@
 //#define ActiveApp_Flocking
 //#define ActiveApp_GraphTheory
 //#define ActiveApp_AStar
-//#define ActiveApp_NavMeshGraph
-#define ActiveApp_FSM
+#define ActiveApp_NavMeshGraph
+//#define ActiveApp_FSM
+//#define  ActiveApp_Behaviour
+
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
 #include "projects/Movement/Sandbox/App_Sandbox.h"
@@ -50,6 +52,11 @@ typedef App_NavMeshGraph CurrentApp;
 #include "projects/DecisionMaking/FiniteStateMachines/App_AgarioGame.h"
 typedef App_AgarioGame CurrentApp;
 #endif//ActiveApp_Flocking
+
+#ifdef ActiveApp_Behaviour
+#include "projects/DecisionMaking/BehaviorTrees/App_AgarioGame_BT.h"
+typedef App_AgarioGame_BT CurrentApp;
+#endif 
 
 class App_Selector {
 public: 

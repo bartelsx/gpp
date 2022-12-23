@@ -47,4 +47,18 @@ namespace FSMCondition
 
 	};
 }
+
+namespace FSMCondition
+{
+	class FoodIsEatenCondition : public Elite::FSMCondition
+	{
+	public:
+		FoodIsEatenCondition() : FSMCondition() {};
+
+		//Inherited via FSMCondition
+		virtual bool Evaluate(Elite::Blackboard* pBlackboard) const override;
+
+	};
+}
+
 #endif

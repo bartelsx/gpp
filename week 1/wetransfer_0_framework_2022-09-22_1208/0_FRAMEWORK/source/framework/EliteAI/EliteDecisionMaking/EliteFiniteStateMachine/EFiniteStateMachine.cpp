@@ -40,7 +40,7 @@ void FiniteStateMachine::Update(float deltaTime)
 
            if( cond->Evaluate(m_pBlackboard))
             {
-                m_pCurrentState = state;
+             ChangeState(state);
                 break;
             };
 		}

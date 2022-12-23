@@ -96,6 +96,8 @@ void App_AgarioGame::Start()
 	//3. Create the condition between those states
 	FoodNearByCondition* pFoodNearByCondition = new FoodNearByCondition();
 	m_pConditions.push_back(pFoodNearByCondition);
+	FoodIsEatenCondition* pFoodEaten = new FoodIsEatenCondition();
+	m_pConditions.push_back(pFoodEaten);
 
 	//4. Create the finite state machine with a starting state and the blackboard
 	FiniteStateMachine* pStateMachine = new FiniteStateMachine(pWanderState, pBlackboard);
@@ -106,9 +108,12 @@ void App_AgarioGame::Start()
 	// condition: if the Evaluate function returns true => transition will fire and move to the toState
 	// toState: end state where the agent will move to if the transition fires
 	pStateMachine->AddTransition(pWanderState, pSeekFoodState, pFoodNearByCondition);
+	pStateMachine->AddTransition(pSeekFoodState, pWanderState, pFoodEaten);
+	//pStateMachine->AddTransition(pSeekFoodState, evade, pEvadeBiggerAgent);
 
 	//6. Activate the decision making stucture on the custom agent by calling the SetDecisionMaking function
 	m_pCustomAgent->SetDecisionMaking(pStateMachine);
+	
 }
 
 void App_AgarioGame::Update(float deltaTime)
@@ -166,6 +171,7 @@ Blackboard* App_AgarioGame::CreateBlackboard(AgarioAgent* a)
 	pBlackboard->AddData("Agent", a);
 	pBlackboard->AddData("FoodVecPtr", &m_pFoodVec);
 	pBlackboard->AddData("FoodNearBy", static_cast<AgarioFood*>(nullptr));
+	pBlackboard->AddData("WorldSize", m_TrimWorldSize);
 
 	return pBlackboard;
 }

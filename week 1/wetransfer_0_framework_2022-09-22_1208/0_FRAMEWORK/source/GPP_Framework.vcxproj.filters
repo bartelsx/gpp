@@ -43,6 +43,8 @@
     <ClCompile Include="projects\Shared\Agario\AgarioContactListener.cpp" />
     <ClCompile Include="projects\Shared\Agario\AgarioFood.cpp" />
     <ClCompile Include="framework\EliteAI\EliteDecisionMaking\EliteFiniteStateMachine\EFiniteStateMachine.cpp" />
+    <ClCompile Include="framework\EliteAI\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.cpp" />
+    <ClCompile Include="projects\DecisionMaking\BehaviorTrees\App_AgarioGame_BT.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="projects\App_Selector.h" />
@@ -134,6 +136,9 @@
     <ClInclude Include="framework\EliteAI\EliteData\EBlackboard.h" />
     <ClInclude Include="framework\EliteAI\EliteDecisionMaking\EDecisionMaking.h" />
     <ClInclude Include="framework\EliteAI\EliteDecisionMaking\EliteFiniteStateMachine\EFiniteStateMachine.h" />
+    <ClInclude Include="framework\EliteAI\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.h" />
+    <ClInclude Include="projects\DecisionMaking\BehaviorTrees\Behaviors.h" />
+    <ClInclude Include="projects\DecisionMaking\BehaviorTrees\App_AgarioGame_BT.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />

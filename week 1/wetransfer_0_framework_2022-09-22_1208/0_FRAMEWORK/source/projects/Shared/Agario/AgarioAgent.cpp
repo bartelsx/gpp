@@ -10,6 +10,7 @@ AgarioAgent::AgarioAgent(Elite::Vector2 pos, Color color)
 	m_BodyColor = color;
 	SetPosition(pos);
 	SetMass(0.f);
+	SetAutoOrient(true);
 
 	m_pRigidBody->SetUserData({ int(AgarioObjectTypes::Player), this });
 

@@ -17,6 +17,16 @@ void WanderState::OnEnter(Blackboard* pBlackboard)
 void SeekFoodState::OnEnter(Blackboard* pBlackboard)
 {
 	//Todo
+	AgarioAgent* pAgent;
+
+	bool isValid = pBlackboard->GetData("Agent", pAgent);
+	if (!isValid || pAgent == nullptr) return;
+
+	AgarioFood* pFood;
+	pBlackboard->GetData("FoodNearBy", pFood);
+
+	pAgent->SetToSeek(pFood->GetPosition());
+
 }
 
 bool ::FSMCondition::FoodNearByCondition::Evaluate(Blackboard* pBlackboard) const
@@ -52,4 +62,14 @@ bool ::FSMCondition::FoodNearByCondition::Evaluate(Blackboard* pBlackboard) cons
 	}
 
 	return false;
+}
+
+
+bool ::FSMCondition::FoodIsEatenCondition::Evaluate(Blackboard* pBlackboard) const
+{
+	//returns true if the foodnearby has been eaten
+	AgarioFood* pFood;
+	pBlackboard->GetData("FoodNearBy", pFood);
+	return pFood->CanBeDestroyed();
+
 }
