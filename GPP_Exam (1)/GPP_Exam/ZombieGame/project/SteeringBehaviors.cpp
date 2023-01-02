@@ -96,11 +96,12 @@ SteeringPlugin_Output Wander::CalculateSteering(float deltaT, AgentInfo* pAgent)
 {
 	SteeringPlugin_Output steering = {};
 
-	float rndAngle{ Elite::ToRadians( float(rand() % 360 - 180)) };
+	Elite::Vector2 newVelocity{};
 
-	Elite::Vector2 middlePCircle{ pAgent->Position.x + cosf(pAgent->Orientation) * m_OffsetDistance,
-			pAgent->Position.y + sinf(pAgent->Orientation) * m_OffsetDistance };
-	Elite::Vector2 rndPoint{ middlePCircle.x + cosf(rndAngle) * m_Radius, middlePCircle.y + sinf(rndAngle) * m_Radius };
+	float rndAngle{ Elite::ToRadians( 37) };
+
+	Elite::Vector2 rndPoint{ pAgent->Position.x + cosf(pAgent->Orientation + rndAngle) * pAgent->LinearVelocity.Magnitude(),
+			pAgent->Position.y + sinf(pAgent->Orientation+rndAngle) * pAgent->LinearVelocity.Magnitude() };
 
 	//Elite::Vector2 newDir{ pAgent->GetDirection().x + cosf(rndNr + pAgent->Orientation),
 	//pAgent->GetDirection().y + sinf(rndNr + pAgent->Orientation) };

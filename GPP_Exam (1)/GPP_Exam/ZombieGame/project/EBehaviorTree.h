@@ -138,6 +138,17 @@ namespace Elite
 		virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
 	};
 
+	//Inverts the result of childBehavior (returns Failure instead of Success and vice versa)
+	class BehaviorInvert: public BehaviorDecorator
+	{
+	public:
+		explicit BehaviorInvert(IBehavior* childBehaviors) :
+			BehaviorDecorator(childBehaviors) {}
+
+		virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
+	};
+
+
 #pragma endregion
 
 	//-----------------------------------------------------------------
@@ -151,6 +162,13 @@ namespace Elite
 
 	private:
 		std::function<bool(Blackboard*)> m_fpConditional = nullptr;
+	};
+
+	class BehaviorInvertConditional : public BehaviorInvert
+	{
+	public:
+		explicit BehaviorInvertConditional(std::function<bool(Blackboard*)> fp) : BehaviorInvert(new BehaviorConditional(fp)){};
+		//virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
 	};
 
 	class BehaviorTimedConditional : public IBehavior

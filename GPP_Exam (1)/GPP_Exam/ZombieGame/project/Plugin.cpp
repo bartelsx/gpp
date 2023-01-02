@@ -24,12 +24,33 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 	m_pBlackboard = new Blackboard();
 	m_pBlackboard->AddData("Interface", m_pInterface);
 
-	m_pBehaviorTree = new BehaviorTree(m_pBlackboard, new BehaviorPartialSequence(
+	m_pBehaviorTree = new BehaviorTree(m_pBlackboard, new BehaviorSequence(
 		{
+			new BehaviorSelector
+			(
+				{
+					new BehaviorInvertConditional(BT_Condition::CheckEnergy),
+					new BehaviorAction(BT_Action::Eat)
+				}
+			),
+			new BehaviorSelector
+			(
+				{
+					new BehaviorInvertConditional(BT_Condition::CheckHealth),
+					new BehaviorAction(BT_Action::UseMedkit)
+				}
+			),
+			new BehaviorSelector
+			(
+				{
+					new BehaviorInvertConditional(BT_Condition::IsFastEnemyInFOV),
+					new BehaviorAction(BT_Action::ShootEnemy)
+				}
+			),
 			new BehaviorMaskFailure(
 				new BehaviorPartialSequence(
 					{
-						new BehaviorTimedConditional(5, BT_Condition::IsHouseInFOV),
+						new BehaviorTimedConditional(7, BT_Condition::IsHouseInFOV),
 						new BehaviorPartialSequence(
 							{
 									new BehaviorAction(BT_Action::MoveToHouse),

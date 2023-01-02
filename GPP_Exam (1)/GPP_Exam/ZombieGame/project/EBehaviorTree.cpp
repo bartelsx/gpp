@@ -137,6 +137,21 @@ BehaviorState BehaviorMaskFailure::Execute(Blackboard* pBlackBoard)
 	return BehaviorState::Success;
 }
 
+BehaviorState BehaviorInvert::Execute(Blackboard* pBlackBoard)
+{
+	auto result = m_Child->Execute(pBlackBoard);
+
+	switch(result)
+	{
+	case BehaviorState::Failure:
+		return BehaviorState::Success;
+	case BehaviorState::Success:
+		return BehaviorState::Failure;
+	default:
+		return result;
+	}
+}
+
 //-----------------------------------------------------------------
 // BEHAVIOR TREE CONDITIONAL (IBehavior)
 //-----------------------------------------------------------------
