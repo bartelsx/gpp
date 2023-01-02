@@ -26,24 +26,29 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 
 	m_pBehaviorTree = new BehaviorTree(m_pBlackboard, new BehaviorPartialSequence(
 		{
-			new BehaviorPartialSequence(
-				{
-					new BehaviorConditional(BT_Condition::IsHouseInFOV),
-					new BehaviorPartialSequence(
-						{
-								new BehaviorAction(BT_Action::MoveToHouse),
-								//new BehaviorAction(BT_Action::MoveToHouse),
-							 	new BehaviorRepeat( new BehaviorPartialSequence({
-									new BehaviorTimedConditional(5, BT_Condition::FoundLoot),
-									new BehaviorAction(BT_Action::MoveToLoot),
-									//new BehaviorConditional(BT_Condition::IsNotGarbage),
-									new BehaviorAction(BT_Action::HandleLoot)
-								})),
-							    new BehaviorAction(BT_Action::LeaveHouse)
-							 })
+			new BehaviorMaskFailure(
+				new BehaviorPartialSequence(
+					{
+						new BehaviorTimedConditional(5, BT_Condition::IsHouseInFOV),
+						new BehaviorPartialSequence(
+							{
+									new BehaviorAction(BT_Action::MoveToHouse),
+									//new BehaviorAction(BT_Action::MoveToHouse),
+									new BehaviorRepeat(new BehaviorPartialSequence({
+										new BehaviorTimedConditional(5, BT_Condition::FoundLoot),
+										new BehaviorAction(BT_Action::MoveToLoot),
+										//new BehaviorConditional(BT_Condition::IsNotGarbage),
+										new BehaviorAction(BT_Action::HandleLoot)
+									})),
+									new BehaviorAction(BT_Action::LeaveHouse)
+							}
+						)
 					}
-				),
+				)
+			),
+			new BT_Steering::BehaviorWander()
 		}
+
 	));
 }
 
@@ -156,6 +161,7 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 
 
 	m_pBlackboard->SetData("Steering", &steering);
+	m_pBlackboard->SetData("DeltaT", dt);
 
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework

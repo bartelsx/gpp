@@ -4,10 +4,11 @@
 #include <IExamInterface.h>
 #include "EBehaviorTree.h"
 
+using namespace Elite;
 
 namespace BT_Condition
 {
-	bool IsHouseInFOV(Elite::Blackboard* pBlackboard)
+	bool IsHouseInFOV(Blackboard* pBlackboard)
 	{
 		std::cout << "IsHouseInFOV\n";
 		IExamInterface* pInterface;
@@ -18,10 +19,10 @@ namespace BT_Condition
 		}
 
 
-		std::vector<Elite::Vector2> visitedHouses;
+		std::vector<Vector2> visitedHouses;
 		if (!pBlackboard->GetData("VisitedHouses", visitedHouses))
 		{
-			visitedHouses = std::vector<Elite::Vector2>();
+			visitedHouses = std::vector<Vector2>();
 		}
 
 		HouseInfo hi = {};
@@ -43,7 +44,7 @@ namespace BT_Condition
 		return false;
 	}
 
-	bool FoundLoot(Elite::Blackboard* pBlackboard)
+	bool FoundLoot(Blackboard* pBlackboard)
 	{
 		std::cout << "FoundLoot\n";
 		IExamInterface* pInterface;
@@ -84,41 +85,41 @@ namespace BT_Condition
 
 namespace BT_Action
 {
-	void SetTargetPos(SteeringPlugin_Output* pSteering, Elite::Vector2& targetPos, AgentInfo& agentInfo)
+	void SetTargetPos(SteeringPlugin_Output* pSteering, Vector2& targetPos, AgentInfo& agentInfo)
 	{
 		pSteering->LinearVelocity = targetPos - agentInfo.Position; //Desired Velocity
 		pSteering->LinearVelocity.Normalize(); //Normalize Desired Velocity
 		pSteering->LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
 	}
 
-	bool IsInRect(Elite::Vector2 center, Elite::Vector2 size, Elite::Vector2 pos)
+	bool IsInRect(Vector2 center, Vector2 size, Vector2 pos)
 	{
 		return std::abs(pos.x - center.x) <= size.x / 2.f
 			&& std::abs(pos.y - center.y) <= size.y / 2.f;
 	}
 
-	Elite::BehaviorState MoveToHouse(Elite::Blackboard* pBlackboard)
+	BehaviorState MoveToHouse(Blackboard* pBlackboard)
 	{
 		std::cout << "MoveToHouse\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		HouseInfo hi;
 		if (!pBlackboard->GetData("HouseToVisit", hi))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		SteeringPlugin_Output* pSteering;
 		if (!pBlackboard->GetData("Steering", pSteering))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
-		Elite::Vector2 checkPointLocation{ hi.Center };
+		Vector2 checkPointLocation{ hi.Center };
 		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
 
 		auto agentInfo = pInterface->Agent_GetInfo();
@@ -132,43 +133,43 @@ namespace BT_Action
 			pSteering->LinearVelocity = Elite::ZeroVector2;
 
 
-			std::vector<Elite::Vector2> visitedHouses;
+			std::vector<Vector2> visitedHouses;
 			if (!pBlackboard->GetData("VisitedHouses", visitedHouses))
 			{
-				visitedHouses = std::vector<Elite::Vector2>();
+				visitedHouses = std::vector<Vector2>();
 			}
 			visitedHouses.push_back(hi.Center);
 			pBlackboard->SetData("VisitedHouses", visitedHouses);
 
-			return Elite::BehaviorState::Success;
+			return BehaviorState::Success;
 		}
 
 		pSteering->AutoOrient = true;
-		return Elite::BehaviorState::Running;
+		return BehaviorState::Running;
 	}
 
-	Elite::BehaviorState MoveToLoot(Elite::Blackboard* pBlackboard)
+	BehaviorState MoveToLoot(Blackboard* pBlackboard)
 	{
 		std::cout << "MoveToLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		EntityInfo ei;
 		if (!pBlackboard->GetData("ItemToPick", ei))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		SteeringPlugin_Output* pSteering;
 		if (!pBlackboard->GetData("Steering", pSteering))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
-		Elite::Vector2 checkPointLocation{ ei.Location };
+		Vector2 checkPointLocation{ ei.Location };
 		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
 
 		auto agentInfo = pInterface->Agent_GetInfo();
@@ -181,37 +182,37 @@ namespace BT_Action
 		float distance = agentInfo.Position.Distance(checkPointLocation);
 		if (distance < 3.f)
 		{
-			return Elite::BehaviorState::Success;
+			return BehaviorState::Success;
 		}
 
-		return Elite::BehaviorState::Running;
+		return BehaviorState::Running;
 	}
 
-	Elite::BehaviorState HandleLoot(Elite::Blackboard* pBlackboard)
+	BehaviorState HandleLoot(Blackboard* pBlackboard)
 	{
 		std::cout << "TakeLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		EntityInfo ei;
 		if (!pBlackboard->GetData("ItemToPick", ei))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		SteeringPlugin_Output* pSteering;
 		if (!pBlackboard->GetData("Steering", pSteering))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		HouseInfo hi;
 		if (!pBlackboard->GetData("HouseToVisit", hi))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		int inventorySlot = 0;
@@ -238,36 +239,36 @@ namespace BT_Action
 				}
 			}
 
-			return Elite::BehaviorState::Success;
+			return BehaviorState::Success;
 		}
 
-		return Elite::BehaviorState::Failure;
+		return BehaviorState::Failure;
 	}
 
-	Elite::BehaviorState LeaveHouse(Elite::Blackboard* pBlackboard)
+	BehaviorState LeaveHouse(Blackboard* pBlackboard)
 	{
 
 		std::cout << "LeaveHouse\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		SteeringPlugin_Output* pSteering;
 		if (!pBlackboard->GetData("Steering", pSteering))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 		HouseInfo hi;
 		if (!pBlackboard->GetData("HouseToVisit", hi))
 		{
-			return Elite::BehaviorState::Failure;
+			return BehaviorState::Failure;
 		}
 
 
-		Elite::Vector2 checkPointLocation{ pInterface->World_GetInfo().Dimensions.x ,0.f };
+		Vector2 checkPointLocation{ pInterface->World_GetInfo().Dimensions.x ,0.f };
 		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
 
 		auto agentInfo = pInterface->Agent_GetInfo();
@@ -276,7 +277,70 @@ namespace BT_Action
 
 
 		return IsInRect(hi.Center, hi.Size, agentInfo.Position)
-			? Elite::BehaviorState::Running
-			: Elite::BehaviorState::Success;
+			? BehaviorState::Running
+			: BehaviorState::Success;
 	}
+}
+
+namespace BT_Steering
+{
+
+	//-----------------------------------------------------------------
+	// STEERING BEHAVIORS (IBehavior)
+	//-----------------------------------------------------------------
+	class BehaviorSteering : public IBehavior
+	{
+	public:
+		BehaviorSteering(ISteeringBehavior* pSteeringBehavior, std::string name)
+		: m_pSteeringBehavior(pSteeringBehavior)
+		, m_debugName(name)
+		{}
+
+		~BehaviorSteering() override
+		{
+			SAFE_DELETE(m_pSteeringBehavior);
+		}
+
+		virtual BehaviorState Execute(Blackboard* pBlackboard) override
+		{
+			std::cout << m_debugName << "\n";
+
+			IExamInterface* pInterface;
+			if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+			{
+				return BehaviorState::Failure;
+			}
+
+			SteeringPlugin_Output* pSteering;
+			if (!pBlackboard->GetData("Steering", pSteering))
+			{
+				return BehaviorState::Failure;
+			}
+
+			float deltaT;
+			if (!pBlackboard->GetData("DeltaT", deltaT))
+			{
+				return BehaviorState::Failure;
+			}
+
+			AgentInfo agentInfo = pInterface->Agent_GetInfo();
+			auto steering = m_pSteeringBehavior->CalculateSteering(deltaT, &agentInfo);
+
+			*pSteering = steering;
+
+			return BehaviorState::Success;
+		}
+
+	protected:
+		ISteeringBehavior* m_pSteeringBehavior;
+		std::string m_debugName;
+	};
+
+	class BehaviorWander : public BehaviorSteering
+	{
+	public:
+		explicit BehaviorWander() : BehaviorSteering(new Wander(), "Wander")
+		{  }
+	};
+
 }

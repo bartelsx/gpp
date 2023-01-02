@@ -126,6 +126,17 @@ BehaviorState BehaviorRepeat::Execute(Blackboard* pBlackBoard)
 	return BehaviorState::Running;
 }
 
+BehaviorState BehaviorMaskFailure::Execute(Blackboard* pBlackBoard)
+{
+	auto result = m_Child->Execute(pBlackBoard);
+
+	if (result == BehaviorState::Running)
+	{
+		return BehaviorState::Running;
+	}
+	return BehaviorState::Success;
+}
+
 //-----------------------------------------------------------------
 // BEHAVIOR TREE CONDITIONAL (IBehavior)
 //-----------------------------------------------------------------

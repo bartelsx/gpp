@@ -12,6 +12,7 @@
 
 #include "EBlackboard.h"
 #include "EDecisionMaking.h"
+#include "SteeringBehaviors.h"
 
 namespace Elite
 {
@@ -123,6 +124,15 @@ namespace Elite
 	{
 	public:
 		explicit BehaviorRepeat(IBehavior* childBehaviors) :
+			BehaviorDecorator(childBehaviors) {}
+
+		virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
+	};
+
+	class BehaviorMaskFailure : public BehaviorDecorator
+	{
+	public:
+		explicit BehaviorMaskFailure(IBehavior* childBehaviors) :
 			BehaviorDecorator(childBehaviors) {}
 
 		virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
