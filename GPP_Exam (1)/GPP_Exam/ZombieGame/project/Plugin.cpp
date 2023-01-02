@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "Plugin.h"
 #include "IExamInterface.h"
+#include "Behaviors.h"
 
 using namespace std;
+using namespace Elite;
 
 //Called only once, during initialization
 void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
@@ -13,10 +15,36 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 
 	//Bit information about the plugin
 	//Please fill this in!!
-	info.BotName = "wrong hole";
+	info.BotName = "zombie game";
 	info.Student_FirstName = "Xander";
 	info.Student_LastName = "Bartels";
 	info.Student_Class = "2DAE07";
+
+	//Build behavior tree
+	m_pBlackboard = new Blackboard();
+	m_pBlackboard->AddData("Interface", m_pInterface);
+
+	m_pBehaviorTree = new BehaviorTree(m_pBlackboard, new BehaviorPartialSequence(
+		{
+			new BehaviorPartialSequence(
+				{
+					new BehaviorConditional(BT_Condition::IsHouseInFOV),
+					new BehaviorPartialSequence(
+						{
+								new BehaviorAction(BT_Action::MoveToHouse),
+								//new BehaviorAction(BT_Action::MoveToHouse),
+							 	new BehaviorRepeat( new BehaviorPartialSequence({
+									new BehaviorTimedConditional(5, BT_Condition::FoundLoot),
+									new BehaviorAction(BT_Action::MoveToLoot),
+									//new BehaviorConditional(BT_Condition::IsNotGarbage),
+									new BehaviorAction(BT_Action::HandleLoot)
+								})),
+							    new BehaviorAction(BT_Action::LeaveHouse)
+							 })
+					}
+				),
+		}
+	));
 }
 
 //Called only once
@@ -28,7 +56,8 @@ void Plugin::DllInit()
 //Called only once
 void Plugin::DllShutdown()
 {
-	//Called wheb the plugin gets unloaded
+	//Called when the plugin gets unloaded
+	SAFE_DELETE(m_pBehaviorTree)
 }
 
 //Called only once, during initialization
@@ -61,56 +90,56 @@ void Plugin::Update(float dt)
 {
 	//Demo Event Code
 	//In the end your AI should be able to walk around without external input
-	if (m_pInterface->Input_IsMouseButtonUp(Elite::InputMouseButton::eLeft))
+	if (m_pInterface->Input_IsMouseButtonUp(eLeft))
 	{
 		//Update target based on input
-		Elite::MouseData mouseData = m_pInterface->Input_GetMouseData(Elite::InputType::eMouseButton, Elite::InputMouseButton::eLeft);
-		const Elite::Vector2 pos = Elite::Vector2(static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y));
+		MouseData mouseData = m_pInterface->Input_GetMouseData(eMouseButton, eLeft);
+		const Vector2 pos = Vector2(static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y));
 		m_Target = m_pInterface->Debug_ConvertScreenToWorld(pos);
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Space))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_Space))
 	{
 		m_CanRun = true;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Left))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_Left))
 	{
-		m_AngSpeed -= Elite::ToRadians(10);
+		m_AngSpeed -= ToRadians(10);
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Right))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_Right))
 	{
-		m_AngSpeed += Elite::ToRadians(10);
+		m_AngSpeed += ToRadians(10);
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_G))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_G))
 	{
 		m_GrabItem = true;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_U))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_U))
 	{
 		m_UseItem = true;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_R))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_R))
 	{
 		m_RemoveItem = true;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyUp(Elite::eScancode_Space))
+	else if (m_pInterface->Input_IsKeyboardKeyUp(eScancode_Space))
 	{
 		m_CanRun = false;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Delete))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_Delete))
 	{
 		m_pInterface->RequestShutdown();
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_KP_Minus))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_KP_Minus))
 	{
 		if (m_InventorySlot > 0)
 			--m_InventorySlot;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_KP_Plus))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_KP_Plus))
 	{
 		if (m_InventorySlot < 4)
 			++m_InventorySlot;
 	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Q))
+	else if (m_pInterface->Input_IsKeyboardKeyDown(eScancode_Q))
 	{
 		ItemInfo info = {};
 		m_pInterface->Inventory_GetItem(m_InventorySlot, info);
@@ -122,55 +151,22 @@ void Plugin::Update(float dt)
 //This function calculates the new SteeringOutput, called once per frame
 SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 {
-	auto steering = SteeringPlugin_Output();
+	//auto steering = SteeringPlugin_Output();
+
+
+
+	m_pBlackboard->SetData("Steering", &steering);
+
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	auto agentInfo = m_pInterface->Agent_GetInfo();
 
-	Elite::Vector2 nextTargetPos{};
-	if (GetHousesInFOV().size() > 0)
-	{
-		for (auto house : GetHousesInFOV())
-		{
-			Elite::Vector2 checkPointLocation{ house.Center };
-			nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
-			if(agentInfo.Position.x > checkPointLocation.x - 2
-				&& agentInfo.Position.y > checkPointLocation.y - 2
-				&& agentInfo.Position.x < checkPointLocation.x + 2
-				&& agentInfo.Position.y < checkPointLocation.y + 2)
-			{
-				steering.AutoOrient = false;
-				steering.AngularVelocity = 1.f;
+	Vector2 nextTargetPos{};
 
-				
-			}
-			
-		}
+	m_pBehaviorTree->Update(dt);
 
-	}
-	if (GetEntitiesInFOV().size() > 0)
-	{
-		for (auto item : GetEntitiesInFOV())
-		{
-			Elite::Vector2 checkPointLocation{ item.Location };
-			nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
-			if (agentInfo.Position.Distance(checkPointLocation) < agentInfo.GrabRange)
-			{
-				if (item.Type == eEntityType::ITEM)
-				{
-					ItemInfo itemInfo{};
-					m_pInterface->Item_Grab(item, itemInfo);
+	//m_pBlackboard->GetData("Steering", steering);
 
-					if (m_InventorySlot < m_pInterface->Inventory_GetCapacity())
-					{
-
-						m_pInterface->Inventory_AddItem(m_InventorySlot, itemInfo);
-						++m_InventorySlot;
-					}
-				}
-			}
-		}
-	}
 	//Use the navmesh to calculate the next navmesh point
 	//auto nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(checkpointLocation);
 
@@ -221,14 +217,14 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	}
 
 	//Simple Seek Behaviour (towards Target)
-	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
-	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
-	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
+	//steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
+	//steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
+	//steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
 
-	if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
+	/*if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
 	{
 		steering.LinearVelocity = Elite::ZeroVector2;
-	}
+	}*/
 
 	//steering.AngularVelocity = m_AngSpeed; //Rotate your character to inspect the world while walking
 	//steering.AutoOrient = true; //Setting AutoOrient to TRue overrides the AngularVelocity
@@ -241,7 +237,7 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	m_GrabItem = false; //Reset State
 	m_UseItem = false;
 	m_RemoveItem = false;
-	//STEERING BEHEVIOUR IS AL WE HAVE TO DO!!!!! AND INVENTORY
+
 	return steering;
 }
 

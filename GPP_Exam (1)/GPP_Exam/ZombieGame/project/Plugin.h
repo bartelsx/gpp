@@ -1,6 +1,8 @@
 #pragma once
+#include "EBehaviorTree.h"
 #include "IExamPlugin.h"
 #include "Exam_HelperStructs.h"
+
 
 class IBaseInterface;
 class IExamInterface;
@@ -24,8 +26,11 @@ public:
 private:
 	//Interface, used to request data from/perform actions with the AI Framework
 	IExamInterface* m_pInterface = nullptr;
+	Elite::Blackboard* m_pBlackboard;
 	std::vector<HouseInfo> GetHousesInFOV() const;
 	std::vector<EntityInfo> GetEntitiesInFOV() const;
+
+	SteeringPlugin_Output steering{};
 
 	Elite::Vector2 m_Target = {};
 	bool m_CanRun = false; //Demo purpose
@@ -34,7 +39,7 @@ private:
 	bool m_RemoveItem = false; //Demo purpose
 	float m_AngSpeed = 0.f; //Demo purpose
 
-	
+	Elite::BehaviorTree* m_pBehaviorTree;
 
 	UINT m_InventorySlot = 0;
 };

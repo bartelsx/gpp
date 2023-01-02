@@ -8,6 +8,7 @@ struct SteeringPlugin_Output
 	float AngularVelocity = 0.f;
 	bool AutoOrient = true;
 	bool RunMode = false;
+	bool IsValid = true;
 };
 
 struct PluginInfo

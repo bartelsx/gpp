@@ -3,3 +3,4 @@
 **/bin/*
 **/TempFiles/*
 *.pptx
+*.DS_Store
