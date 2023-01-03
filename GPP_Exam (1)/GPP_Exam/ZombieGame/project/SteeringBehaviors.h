@@ -118,7 +118,8 @@ protected:
 	float m_Radius = 4.f;
 	const int m_MaxAngleChange = 45;
 	float m_WanderAngle = 0.f;
-
+	float m_time = 0.f;
+	Elite::Vector2 OldVelocity{-1,-1};
 };
 
 ///////////////////////////////////////

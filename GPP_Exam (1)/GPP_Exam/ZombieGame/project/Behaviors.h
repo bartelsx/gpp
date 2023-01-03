@@ -54,7 +54,7 @@ namespace BT_Condition
 				if (ei.Type == eEntityType::ENEMY)
 				{
 					EnemyInfo enemyInfo;
-
+					pInterface->Enemy_GetInfo(ei, enemyInfo);
 					if (enemyInfo.Type == type)
 					{
 						pInterface->Enemy_GetInfo(ei, enemyInfo);
@@ -74,11 +74,15 @@ namespace BT_Condition
 
 	bool IsFastEnemyInFOV(Blackboard* pBlackboard)
 	{
+		std::cout << "zombie fast\n";
+
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_RUNNER);
 	}
 
 	bool IsSlowEnemyInFOV(Blackboard* pBlackboard)
 	{
+		std::cout << "zombie slow\n";
+
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_NORMAL) || IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_HEAVY);
 	}
 
@@ -167,6 +171,31 @@ namespace BT_Condition
 		return false;
 	}
 
+	bool CheckForGunInInventory(Blackboard* pBlackboard)
+	{
+		std::cout << "CheckForGunInInventory\n";
+		IExamInterface* pInterface;
+
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return false;
+		}
+
+		AgentInfo agentInfo{ pInterface->Agent_GetInfo() };
+
+
+			int itemIdxPistol{ BT_utils::GetInventoryItem(pInterface, eItemType::PISTOL) };
+			int itemIdxShotgun{ BT_utils::GetInventoryItem(pInterface, eItemType::SHOTGUN) };
+			if (itemIdxPistol >= 0 || itemIdxShotgun >= 0)
+			{
+				return true;
+			}
+		
+
+		return false;
+	}
+
+
 	bool FoundLoot(Blackboard* pBlackboard)
 	{
 		std::cout << "FoundLoot\n";
@@ -251,10 +280,10 @@ namespace BT_Action
 
 		BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
 
-		if (agentInfo.Position.Distance(checkPointLocation) < 2.f)
-		{
 			pSteering->AngularVelocity = 1.f;
 			pSteering->AutoOrient = false;
+		if (agentInfo.Position.Distance(checkPointLocation) < 2.f)
+		{
 			pSteering->LinearVelocity = Elite::ZeroVector2;
 
 
