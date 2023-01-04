@@ -292,7 +292,10 @@ namespace BT_Action
 			{
 				visitedHouses = std::vector<Vector2>();
 			}
+			if(std::find(visitedHouses.begin(),visitedHouses.end(),hi.Center) == visitedHouses.end())
+			{
 			visitedHouses.push_back(hi.Center);
+			}
 			pBlackboard->SetData("VisitedHouses", visitedHouses);
 
 			return BehaviorState::Success;
@@ -561,6 +564,30 @@ namespace BT_Action
 
 		return result;
 	}
+BehaviorState Turn(Blackboard* pBlackboard)
+	{
+		std::cout << "turn\n";
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
+
+		SteeringPlugin_Output* pSteering;
+		if (!pBlackboard->GetData("Steering", pSteering))
+		{
+			return BehaviorState::Failure;
+		}
+
+		pSteering->AutoOrient = false;
+		pSteering->AngularVelocity = 1.f;
+
+		
+			
+		return BehaviorState::Success;
+		
+	}
 
 }
 
@@ -607,9 +634,37 @@ namespace BT_Steering
 
 			AgentInfo agentInfo = pInterface->Agent_GetInfo();
 			auto steering = m_pSteeringBehavior->CalculateSteering(deltaT, &agentInfo);
-
 			*pSteering = steering;
 
+			//Elite::Vector2 worldCenter{ pInterface->World_GetInfo().Center };
+			//Elite::Vector2 worldsize{ pInterface->World_GetInfo().Dimensions };
+			//
+			//Elite::Vector2 newDir = { -1,-1 };
+			//
+			//if (agentInfo.Position.x <= worldCenter.x - worldsize.x / 4 && agentInfo.Position.y <= worldCenter.y - worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x + worldsize.x / 2 - agentInfo.Position.x, worldCenter.y - worldsize.y / 2 - agentInfo.Position.y
+			//};
+			//}
+			//
+			//if(agentInfo.Position.x >= worldCenter.x + worldsize.x/4 && agentInfo.Position.y <= worldCenter.y - worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x - worldsize.x / 2 - agentInfo.Position.x, worldCenter.y + worldsize.y / 2 };
+			//}
+			//
+			//if(agentInfo.Position.x <= worldCenter.x - worldsize.x/4 && agentInfo.Position.y >= worldCenter.y + worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x + worldsize.x / 2 - agentInfo.Position.x,  worldCenter.y + worldsize.y / 2 - agentInfo.Position.y };
+			//}
+			//
+			//if(agentInfo.Position.x >= worldCenter.x + worldsize.x/4 && agentInfo.Position.y < worldCenter.y + worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x - worldsize.x / 2 - agentInfo.Position.x ,  worldCenter.y - worldsize.y / 2 - agentInfo.Position.y };
+			//}
+			//
+			//pSteering->LinearVelocity = newDir ;
+			//pSteering->LinearVelocity.Normalize();
+			//pSteering->LinearVelocity *= agentInfo.MaxLinearSpeed;
 			return BehaviorState::Success;
 		}
 

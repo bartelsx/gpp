@@ -116,7 +116,7 @@ SteeringPlugin_Output Wander::CalculateSteering(float deltaT, AgentInfo* pAgent)
 	
 	//Elite::Vector2 newDir{ pAgent->GetDirection().x + cosf(rndNr + pAgent->Orientation),
 	//pAgent->GetDirection().y + sinf(rndNr + pAgent->Orientation) };
-	if(m_time >7)
+	if(m_time >m_timeToChange)
 	{
 		Elite::Vector2 newDir{ rndPoint - pAgent->Position };
 		steering.AutoOrient = false;
@@ -124,12 +124,13 @@ SteeringPlugin_Output Wander::CalculateSteering(float deltaT, AgentInfo* pAgent)
 		steering.LinearVelocity = newDir;
 		steering.LinearVelocity.Normalize();
 		steering.LinearVelocity *= pAgent->MaxLinearSpeed;
-		OldVelocity = newDir;
+		m_OldVelocity = newDir;
 		m_time = 0;
+		m_timeToChange += 0.5f;
 	}
-	else if( m_time< 1)
+	else if( m_time< 2 )
 	{
-		steering.LinearVelocity = OldVelocity;
+		steering.LinearVelocity = m_OldVelocity;
 		steering.LinearVelocity.Normalize();
 		steering.LinearVelocity *= pAgent->MaxLinearSpeed;
 		steering.AutoOrient = true;
@@ -137,7 +138,7 @@ SteeringPlugin_Output Wander::CalculateSteering(float deltaT, AgentInfo* pAgent)
 	}
 	else
 	{
-		steering.LinearVelocity = OldVelocity;
+		steering.LinearVelocity = m_OldVelocity;
 		steering.LinearVelocity.Normalize();
 		steering.LinearVelocity *= pAgent->MaxLinearSpeed;
 		m_time += deltaT;

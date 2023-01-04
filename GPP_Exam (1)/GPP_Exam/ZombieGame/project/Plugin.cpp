@@ -43,28 +43,30 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 			new BehaviorSelector
 			(
 				{
-					new BehaviorInvertConditional([](Blackboard* b) {return ( BT_Condition::IsSlowEnemyInFOV(b)  || BT_Condition::IsFastEnemyInFOV(b) )&& BT_Condition::CheckForGunInInventory(b); }),
+					new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
+								new BehaviorAction(BT_Action::Turn),
+					new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
 						new BehaviorSequence
-			(
-				{
-					new BehaviorAction(BT_Action::FaceEnemy),
-					new BehaviorAction(BT_Action::ShootEnemy)
-				}
-			)
+						(
+							{
+								new BehaviorAction(BT_Action::FaceEnemy),
+								new BehaviorAction(BT_Action::ShootEnemy)
+							}
+						)
+
+
 				}
 			),
 			new BehaviorMaskFailure(
 				new BehaviorPartialSequence(
 					{
-						new BehaviorConditional( BT_Condition::IsHouseInFOV),
+						new BehaviorConditional(BT_Condition::IsHouseInFOV),
 						new BehaviorPartialSequence(
 							{
 									new BehaviorAction(BT_Action::MoveToHouse),
-									//new BehaviorAction(BT_Action::MoveToHouse),
 									new BehaviorRepeat(new BehaviorPartialSequence({
-										new BehaviorTimedConditional(5, BT_Condition::FoundLoot),
+										new BehaviorTimedConditional(7, BT_Condition::FoundLoot),
 										new BehaviorAction(BT_Action::MoveToLoot),
-										//new BehaviorConditional(BT_Condition::IsNotGarbage),
 										new BehaviorAction(BT_Action::HandleLoot)
 									})),
 									new BehaviorAction(BT_Action::LeaveHouse)
@@ -110,7 +112,7 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
-	params.Seed = 36;
+	params.Seed = 35;
 }
 
 //Only Active in DEBUG Mode
