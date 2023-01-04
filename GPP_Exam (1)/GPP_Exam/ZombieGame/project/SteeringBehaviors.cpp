@@ -4,6 +4,10 @@
 //Includes
 #include "SteeringBehaviors.h"
 
+#include <IExamInterface.h>
+
+#include "EBehaviorTree.h"
+
 //SEEK
 //****
 SteeringPlugin_Output Seek::CalculateSteering(float deltaT, AgentInfo* pAgent)
@@ -95,21 +99,56 @@ SteeringPlugin_Output Face::CalculateSteering(float deltaT, AgentInfo* pAgent)
 SteeringPlugin_Output Wander::CalculateSteering(float deltaT, AgentInfo* pAgent)
 {
 	SteeringPlugin_Output steering = {};
+	//IExamInterface* pInterface;
+	//if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+	//{
+	//	return steering;
+	//}
 
-	Elite::Vector2 newVelocity{};
 
-	float rndAngle{ Elite::ToRadians( 37) };
 
-	Elite::Vector2 rndPoint{ pAgent->Position.x + cosf(pAgent->Orientation + rndAngle) * pAgent->LinearVelocity.Magnitude(),
-			pAgent->Position.y + sinf(pAgent->Orientation+rndAngle) * pAgent->LinearVelocity.Magnitude() };
+	
 
+	float rndAngle{ Elite::ToRadians( 40) };
+
+	Elite::Vector2 rndPoint{ pAgent->Position.x + cosf(pAgent->Orientation + rndAngle) * pAgent->MaxAngularSpeed,
+			pAgent->Position.y + sinf(pAgent->Orientation+rndAngle) * pAgent->MaxAngularSpeed };
+	
 	//Elite::Vector2 newDir{ pAgent->GetDirection().x + cosf(rndNr + pAgent->Orientation),
 	//pAgent->GetDirection().y + sinf(rndNr + pAgent->Orientation) };
+	if(m_time >m_timeToChange)
+	{
+		Elite::Vector2 newDir{ rndPoint - pAgent->Position };
+		steering.AutoOrient = false;
+		steering.AngularVelocity = 1.f;
+		steering.LinearVelocity = newDir;
+		steering.LinearVelocity.Normalize();
+		steering.LinearVelocity *= pAgent->MaxLinearSpeed;
+		m_OldVelocity = newDir;
+		m_time = 0;
+		m_timeToChange += 0.5f;
+	}
+	else if( m_time< 2 )
+	{
+		steering.LinearVelocity = m_OldVelocity;
+		steering.LinearVelocity.Normalize();
+		steering.LinearVelocity *= pAgent->MaxLinearSpeed;
+		steering.AutoOrient = true;
+		m_time += deltaT;
+	}
+	else
+	{
+		steering.LinearVelocity = m_OldVelocity;
+		steering.LinearVelocity.Normalize();
+		steering.LinearVelocity *= pAgent->MaxLinearSpeed;
+		m_time += deltaT;
+		
+	}
 
-	Elite::Vector2 newDir{ rndPoint - pAgent->Position };
-	steering.LinearVelocity = newDir;
-	steering.LinearVelocity.Normalize();
-	steering.LinearVelocity *= pAgent->MaxLinearSpeed;
+
+	
+
+	
 
 	return steering;
 }

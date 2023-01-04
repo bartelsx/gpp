@@ -54,7 +54,7 @@ namespace BT_Condition
 				if (ei.Type == eEntityType::ENEMY)
 				{
 					EnemyInfo enemyInfo;
-
+					pInterface->Enemy_GetInfo(ei, enemyInfo);
 					if (enemyInfo.Type == type)
 					{
 						pInterface->Enemy_GetInfo(ei, enemyInfo);
@@ -74,11 +74,15 @@ namespace BT_Condition
 
 	bool IsFastEnemyInFOV(Blackboard* pBlackboard)
 	{
+		std::cout << "zombie fast\n";
+
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_RUNNER);
 	}
 
 	bool IsSlowEnemyInFOV(Blackboard* pBlackboard)
 	{
+		std::cout << "zombie slow\n";
+
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_NORMAL) || IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_HEAVY);
 	}
 
@@ -167,6 +171,31 @@ namespace BT_Condition
 		return false;
 	}
 
+	bool CheckForGunInInventory(Blackboard* pBlackboard)
+	{
+		std::cout << "CheckForGunInInventory\n";
+		IExamInterface* pInterface;
+
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return false;
+		}
+
+		AgentInfo agentInfo{ pInterface->Agent_GetInfo() };
+
+
+			int itemIdxPistol{ BT_utils::GetInventoryItem(pInterface, eItemType::PISTOL) };
+			int itemIdxShotgun{ BT_utils::GetInventoryItem(pInterface, eItemType::SHOTGUN) };
+			if (itemIdxPistol >= 0 || itemIdxShotgun >= 0)
+			{
+				return true;
+			}
+		
+
+		return false;
+	}
+
+
 	bool FoundLoot(Blackboard* pBlackboard)
 	{
 		std::cout << "FoundLoot\n";
@@ -251,10 +280,10 @@ namespace BT_Action
 
 		BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
 
-		if (agentInfo.Position.Distance(checkPointLocation) < 2.f)
-		{
 			pSteering->AngularVelocity = 1.f;
 			pSteering->AutoOrient = false;
+		if (agentInfo.Position.Distance(checkPointLocation) < 2.f)
+		{
 			pSteering->LinearVelocity = Elite::ZeroVector2;
 
 
@@ -263,7 +292,10 @@ namespace BT_Action
 			{
 				visitedHouses = std::vector<Vector2>();
 			}
+			if(std::find(visitedHouses.begin(),visitedHouses.end(),hi.Center) == visitedHouses.end())
+			{
 			visitedHouses.push_back(hi.Center);
+			}
 			pBlackboard->SetData("VisitedHouses", visitedHouses);
 
 			return BehaviorState::Success;
@@ -532,6 +564,30 @@ namespace BT_Action
 
 		return result;
 	}
+BehaviorState Turn(Blackboard* pBlackboard)
+	{
+		std::cout << "turn\n";
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
+
+		SteeringPlugin_Output* pSteering;
+		if (!pBlackboard->GetData("Steering", pSteering))
+		{
+			return BehaviorState::Failure;
+		}
+
+		pSteering->AutoOrient = false;
+		pSteering->AngularVelocity = 1.f;
+
+		
+			
+		return BehaviorState::Success;
+		
+	}
 
 }
 
@@ -578,9 +634,37 @@ namespace BT_Steering
 
 			AgentInfo agentInfo = pInterface->Agent_GetInfo();
 			auto steering = m_pSteeringBehavior->CalculateSteering(deltaT, &agentInfo);
-
 			*pSteering = steering;
 
+			//Elite::Vector2 worldCenter{ pInterface->World_GetInfo().Center };
+			//Elite::Vector2 worldsize{ pInterface->World_GetInfo().Dimensions };
+			//
+			//Elite::Vector2 newDir = { -1,-1 };
+			//
+			//if (agentInfo.Position.x <= worldCenter.x - worldsize.x / 4 && agentInfo.Position.y <= worldCenter.y - worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x + worldsize.x / 2 - agentInfo.Position.x, worldCenter.y - worldsize.y / 2 - agentInfo.Position.y
+			//};
+			//}
+			//
+			//if(agentInfo.Position.x >= worldCenter.x + worldsize.x/4 && agentInfo.Position.y <= worldCenter.y - worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x - worldsize.x / 2 - agentInfo.Position.x, worldCenter.y + worldsize.y / 2 };
+			//}
+			//
+			//if(agentInfo.Position.x <= worldCenter.x - worldsize.x/4 && agentInfo.Position.y >= worldCenter.y + worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x + worldsize.x / 2 - agentInfo.Position.x,  worldCenter.y + worldsize.y / 2 - agentInfo.Position.y };
+			//}
+			//
+			//if(agentInfo.Position.x >= worldCenter.x + worldsize.x/4 && agentInfo.Position.y < worldCenter.y + worldsize.y / 4)
+			//{
+			//	newDir = Elite::Vector2{ worldCenter.x - worldsize.x / 2 - agentInfo.Position.x ,  worldCenter.y - worldsize.y / 2 - agentInfo.Position.y };
+			//}
+			//
+			//pSteering->LinearVelocity = newDir ;
+			//pSteering->LinearVelocity.Normalize();
+			//pSteering->LinearVelocity *= agentInfo.MaxLinearSpeed;
 			return BehaviorState::Success;
 		}
 

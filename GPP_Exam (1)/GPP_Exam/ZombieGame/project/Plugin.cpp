@@ -43,22 +43,30 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 			new BehaviorSelector
 			(
 				{
-					new BehaviorInvertConditional(BT_Condition::IsFastEnemyInFOV),
-					new BehaviorAction(BT_Action::ShootEnemy)
+					new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
+								new BehaviorAction(BT_Action::Turn),
+					new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
+						new BehaviorSequence
+						(
+							{
+								new BehaviorAction(BT_Action::FaceEnemy),
+								new BehaviorAction(BT_Action::ShootEnemy)
+							}
+						)
+
+
 				}
 			),
 			new BehaviorMaskFailure(
 				new BehaviorPartialSequence(
 					{
-						new BehaviorTimedConditional(7, BT_Condition::IsHouseInFOV),
+						new BehaviorConditional(BT_Condition::IsHouseInFOV),
 						new BehaviorPartialSequence(
 							{
 									new BehaviorAction(BT_Action::MoveToHouse),
-									//new BehaviorAction(BT_Action::MoveToHouse),
 									new BehaviorRepeat(new BehaviorPartialSequence({
-										new BehaviorTimedConditional(5, BT_Condition::FoundLoot),
+										new BehaviorTimedConditional(7, BT_Condition::FoundLoot),
 										new BehaviorAction(BT_Action::MoveToLoot),
-										//new BehaviorConditional(BT_Condition::IsNotGarbage),
 										new BehaviorAction(BT_Action::HandleLoot)
 									})),
 									new BehaviorAction(BT_Action::LeaveHouse)
@@ -96,7 +104,7 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
 	params.GodMode = false; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
-	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
+	params.AutoGrabClosestItem = false; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
 	params.StartingDifficultyStage = 1;
 	params.InfiniteStamina = false;
 	params.SpawnDebugPistol = true;
@@ -104,7 +112,7 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
-	params.Seed = 36;
+	params.Seed = 35;
 }
 
 //Only Active in DEBUG Mode
