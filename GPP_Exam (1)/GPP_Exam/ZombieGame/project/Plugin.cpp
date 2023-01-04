@@ -24,61 +24,81 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 	m_pBlackboard = new Blackboard();
 	m_pBlackboard->AddData("Interface", m_pInterface);
 
-	m_pBehaviorTree = new BehaviorTree(m_pBlackboard, new BehaviorSequence(
-		{
-			new BehaviorSelector
+	m_pBehaviorTree = new BehaviorTree
+		(m_pBlackboard,
+			new BehaviorSequence
 			(
 				{
-					new BehaviorInvertConditional(BT_Condition::CheckEnergy),
-					new BehaviorAction(BT_Action::Eat)
-				}
-			),
-			new BehaviorSelector
-			(
-				{
-					new BehaviorInvertConditional(BT_Condition::CheckHealth),
-					new BehaviorAction(BT_Action::UseMedkit)
-				}
-			),
-			new BehaviorSelector
-			(
-				{
-					new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
-								new BehaviorAction(BT_Action::Turn),
-					new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
-						new BehaviorSequence
-						(
-							{
-								new BehaviorAction(BT_Action::FaceEnemy),
-								new BehaviorAction(BT_Action::ShootEnemy)
-							}
-						)
+				//	//Eat if there is food and Energy is low
+				//	new BehaviorSelector
+				//	(
+				//		{
+				//			new BehaviorInvertConditional(BT_Condition::CheckEnergy),
+				//			new BehaviorAction(BT_Action::Eat)
+				//		}
+				//	),
+
+				////Use Medkit if available and Health is low
+				//new BehaviorSelector
+				//(
+				//	{
+				//		new BehaviorInvertConditional(BT_Condition::CheckHealth),
+				//		new BehaviorAction(BT_Action::UseMedkit)
+				//	}
+				//),
+
+				new BehaviorAction(BT_Action::Wander),
+
+				////If Gun is available, check for enemy and shoot him
+				//new BehaviorSelector
+				//(
+				//	{
+				//		new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
+				//					new BehaviorAction(BT_Action::Turn),
+				//		new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
+				//			new BehaviorSequence
+				//			(
+				//				{
+				//					new BehaviorAction(BT_Action::FaceEnemy),
+				//					new BehaviorAction(BT_Action::ShootEnemy)
+				//				}
+				//			)
 
 
-				}
-			),
-			new BehaviorMaskFailure(
-				new BehaviorPartialSequence(
+				//	}
+				//),
+
+
+				//Check if there is an house in FOV, if so, go inside and collect loot
+				new BehaviorSelector
+				(
 					{
-						new BehaviorConditional(BT_Condition::IsHouseInFOV),
-						new BehaviorPartialSequence(
-							{
-									new BehaviorAction(BT_Action::MoveToHouse),
-									new BehaviorRepeat(new BehaviorPartialSequence({
-										new BehaviorTimedConditional(7, BT_Condition::FoundLoot),
-										new BehaviorAction(BT_Action::MoveToLoot),
-										new BehaviorAction(BT_Action::HandleLoot)
-									})),
-									new BehaviorAction(BT_Action::LeaveHouse)
-							}
-						)
+						new BehaviorInvertConditional(BT_Condition::IsHouseInFOV),
+						new BehaviorAction(BT_Action::MoveToHouse)
+					}
+				),
+
+				new BehaviorSelector
+				(
+					{
+						new BehaviorInvertConditional(BT_Condition::IsAgentInHouse),
+						new BehaviorAction(BT_Action::LookForLoot)
+					}
+				),
+
+
+				//If loot in FOV, try to grab it, if too far, set TargetPos to move to loot
+				new BehaviorSelector
+				(
+					{
+						new BehaviorInvertConditional(BT_Condition::IsLootInFOV),
+						new BehaviorAction(BT_Action::TryGrabLoot),
+						new BehaviorAction(BT_Action::MoveToLoot)
 					}
 				)
-			),
-			new BT_Steering::BehaviorWander()
-		}
-
-	));
+			}
+		)
+	);
 }
 
 //Called only once
@@ -112,7 +132,7 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
-	params.Seed = 35;
+	params.Seed = 34;
 }
 
 //Only Active in DEBUG Mode
@@ -191,7 +211,7 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 
 	m_pBlackboard->SetData("Steering", &steering);
 	m_pBlackboard->SetData("DeltaT", dt);
-
+	m_pBlackboard->SetData("AngularVelocity", 0.f);
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	auto agentInfo = m_pInterface->Agent_GetInfo();
@@ -252,14 +272,21 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	}
 
 	//Simple Seek Behaviour (towards Target)
-	//steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
-	//steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
-	//steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
+	m_pBlackboard->GetData("TargetPos", nextTargetPos);
 
-	/*if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
+	nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(nextTargetPos);
+	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
+	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
+	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
+	m_pBlackboard->GetData("AngularVelocity", steering.AngularVelocity);
+	steering.AutoOrient = steering.AngularVelocity == 0;
+
+	std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << "\n";
+
+	if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
 	{
 		steering.LinearVelocity = Elite::ZeroVector2;
-	}*/
+	}
 
 	//steering.AngularVelocity = m_AngSpeed; //Rotate your character to inspect the world while walking
 	//steering.AutoOrient = true; //Setting AutoOrient to TRue overrides the AngularVelocity

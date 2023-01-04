@@ -6,7 +6,7 @@
 
 using namespace Elite;
 
-namespace BT_utils
+namespace BT_Utils
 {
 	int GetInventoryItem(IExamInterface* pInterface, eItemType type)
 	{
@@ -19,13 +19,6 @@ namespace BT_utils
 			}
 		}
 		return -1;
-	}
-
-	void SetTargetPos(SteeringPlugin_Output* pSteering, Vector2& targetPos, AgentInfo& agentInfo)
-	{
-		pSteering->LinearVelocity = targetPos - agentInfo.Position; //Desired Velocity
-		pSteering->LinearVelocity.Normalize(); //Normalize Desired Velocity
-		pSteering->LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
 	}
 
 	bool IsInRect(Vector2 center, Vector2 size, Vector2 pos)
@@ -74,21 +67,21 @@ namespace BT_Condition
 
 	bool IsFastEnemyInFOV(Blackboard* pBlackboard)
 	{
-		std::cout << "zombie fast\n";
+		//std::cout << "zombie fast\n";
 
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_RUNNER);
 	}
 
 	bool IsSlowEnemyInFOV(Blackboard* pBlackboard)
 	{
-		std::cout << "zombie slow\n";
+		//std::cout << "zombie slow\n";
 
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_NORMAL) || IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_HEAVY);
 	}
 
 	bool CheckEnergy(Blackboard* pBlackboard)
 	{
-		std::cout << "CheckEnergy\n";
+		//std::cout << "CheckEnergy\n";
 
 		IExamInterface* pInterface;
 
@@ -101,7 +94,7 @@ namespace BT_Condition
 
 		if (agentInfo.Energy < 3.0f)
 		{
-			int itemIdx{BT_utils::GetInventoryItem(pInterface, eItemType::FOOD) };
+			int itemIdx{BT_Utils::GetInventoryItem(pInterface, eItemType::FOOD) };
 			if (itemIdx>=0)
 			{
 				return true;
@@ -113,7 +106,7 @@ namespace BT_Condition
 
 	bool CheckHealth(Blackboard* pBlackboard)
 	{
-		std::cout << "CheckHealth\n";
+		//std::cout << "CheckHealth\n";
 		IExamInterface* pInterface;
 
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
@@ -125,7 +118,7 @@ namespace BT_Condition
 
 		if (agentInfo.Health < 8.0f)
 		{
-			int itemIdx{BT_utils::GetInventoryItem(pInterface, eItemType::MEDKIT) };
+			int itemIdx{BT_Utils::GetInventoryItem(pInterface, eItemType::MEDKIT) };
 			if (itemIdx>=0)
 			{
 				return true;
@@ -137,7 +130,7 @@ namespace BT_Condition
 
 	bool IsHouseInFOV(Blackboard* pBlackboard)
 	{
-		std::cout << "IsHouseInFOV\n";
+		//std::cout << "IsHouseInFOV\n";
 		IExamInterface* pInterface;
 
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
@@ -171,9 +164,9 @@ namespace BT_Condition
 		return false;
 	}
 
-	bool CheckForGunInInventory(Blackboard* pBlackboard)
+	bool IsAgentInHouse(Blackboard* pBlackboard)
 	{
-		std::cout << "CheckForGunInInventory\n";
+		//std::cout << "IsAgentInHouse\n";
 		IExamInterface* pInterface;
 
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
@@ -181,38 +174,25 @@ namespace BT_Condition
 			return false;
 		}
 
-		AgentInfo agentInfo{ pInterface->Agent_GetInfo() };
+		AgentInfo ai = pInterface->Agent_GetInfo();
 
-
-			int itemIdxPistol{ BT_utils::GetInventoryItem(pInterface, eItemType::PISTOL) };
-			int itemIdxShotgun{ BT_utils::GetInventoryItem(pInterface, eItemType::SHOTGUN) };
-			if (itemIdxPistol >= 0 || itemIdxShotgun >= 0)
-			{
-				return true;
-			}
-		
-
-		return false;
+		HouseInfo hi;
+		if (!pBlackboard->GetData("HouseToVisit", hi))
+		{
+			return false;
+		}
+		return BT_Utils::IsInRect(hi.Center, hi.Size, ai.Position);
 	}
 
-
-	bool FoundLoot(Blackboard* pBlackboard)
+	bool IsLootInFOV(Blackboard* pBlackboard)
 	{
-		std::cout << "FoundLoot\n";
+		//std::cout << "IsLootInFOV\n";
+
 		IExamInterface* pInterface;
-		
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
 			return false;
 		}
-
-		SteeringPlugin_Output* pSteering;
-		if (!pBlackboard->GetData("Steering", pSteering))
-		{
-			return false;
-		}
-		pSteering->AutoOrient = false;
-		pSteering->AngularVelocity = 1.f;
 
 		EntityInfo ei = {};
 		for (int i = 0;; ++i)
@@ -232,6 +212,31 @@ namespace BT_Condition
 		}
 		return false;
 	}
+
+	bool CheckForGunInInventory(Blackboard* pBlackboard)
+	{
+		//std::cout << "CheckForGunInInventory\n";
+		IExamInterface* pInterface;
+
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return false;
+		}
+
+		AgentInfo agentInfo{ pInterface->Agent_GetInfo() };
+
+
+			int itemIdxPistol{ BT_Utils::GetInventoryItem(pInterface, eItemType::PISTOL) };
+			int itemIdxShotgun{ BT_Utils::GetInventoryItem(pInterface, eItemType::SHOTGUN) };
+			if (itemIdxPistol >= 0 || itemIdxShotgun >= 0)
+			{
+				return true;
+			}
+		
+
+		return false;
+	}
+
 
 }
 
@@ -254,7 +259,7 @@ namespace BT_Action
 
 	BehaviorState MoveToHouse(Blackboard* pBlackboard)
 	{
-		std::cout << "MoveToHouse\n";
+		//std::cout << "MoveToHouse\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
@@ -267,47 +272,13 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
-		SteeringPlugin_Output* pSteering;
-		if (!pBlackboard->GetData("Steering", pSteering))
-		{
-			return BehaviorState::Failure;
-		}
-
-		Vector2 checkPointLocation{ hi.Center };
-		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
-
-		auto agentInfo = pInterface->Agent_GetInfo();
-
-		BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
-
-			pSteering->AngularVelocity = 1.f;
-			pSteering->AutoOrient = false;
-		if (agentInfo.Position.Distance(checkPointLocation) < 2.f)
-		{
-			pSteering->LinearVelocity = Elite::ZeroVector2;
-
-
-			std::vector<Vector2> visitedHouses;
-			if (!pBlackboard->GetData("VisitedHouses", visitedHouses))
-			{
-				visitedHouses = std::vector<Vector2>();
-			}
-			if(std::find(visitedHouses.begin(),visitedHouses.end(),hi.Center) == visitedHouses.end())
-			{
-			visitedHouses.push_back(hi.Center);
-			}
-			pBlackboard->SetData("VisitedHouses", visitedHouses);
-
-			return BehaviorState::Success;
-		}
-
-		pSteering->AutoOrient = true;
-		return BehaviorState::Running;
+		pBlackboard->SetData("TargetPos", hi.Center);
+		return BehaviorState::Success;
 	}
 
-	BehaviorState MoveToLoot(Blackboard* pBlackboard)
+	BehaviorState TryGrabLoot(Blackboard* pBlackboard)
 	{
-		std::cout << "MoveToLoot\n";
+		//std::cout << "TryGrabLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
@@ -320,21 +291,97 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
+		int inventorySlot = 0;
+		pBlackboard->GetData("InventorySlot", inventorySlot);
+
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		if (agentInfo.Position.Distance(ei.Location) <= agentInfo.GrabRange)
+		{
+			ItemInfo ii;
+			if (pInterface->Item_GetInfo(ei, ii))
+			{
+				if (ii.Type == eItemType::GARBAGE)
+				{
+					pInterface->Item_Destroy(ei);
+				}
+				else
+				{
+					int count = CountInventoryItems(pInterface, ii.Type);
+
+					if (count < 1 || (count < 2 && ii.Type == eItemType::FOOD))
+					{
+						pInterface->Item_Grab(ei, ii);
+
+						if (inventorySlot < pInterface->Inventory_GetCapacity())
+						{
+							pInterface->Inventory_AddItem(inventorySlot, ii);
+							++inventorySlot;
+							pBlackboard->SetData("InventorySlot", inventorySlot);
+						}
+
+					}
+					else
+					{
+						pInterface->Item_Destroy(ei);
+					}
+				}
+
+			}
+			return BehaviorState::Success;
+		}
+		return BehaviorState::Failure;
+	}
+
+	BehaviorState MoveToLoot(Blackboard* pBlackboard)
+	{
+		//std::cout << "MoveToLoot\n";
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
+
+		EntityInfo ei;
+		if (!pBlackboard->GetData("ItemToPick", ei))
+		{
+			return BehaviorState::Failure;
+		}
+
+		pBlackboard->SetData("TargetPos", ei.Location);
+		pBlackboard->SetData("AngularVelocity", 0.f);
+
+		return BehaviorState::Success;
+	}
+
+	BehaviorState Walk(Blackboard* pBlackboard)
+	{
+		//std::cout << "Walk\n";
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
+
+		Vector2 checkPointLocation;
+		if (!pBlackboard->GetData("TargetPos", checkPointLocation))
+		{
+			return BehaviorState::Failure;
+		}
+
 		SteeringPlugin_Output* pSteering;
 		if (!pBlackboard->GetData("Steering", pSteering))
 		{
 			return BehaviorState::Failure;
 		}
 
-		Vector2 checkPointLocation{ ei.Location };
 		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
 
 		auto agentInfo = pInterface->Agent_GetInfo();
 
-		BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
+		//BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
 		pSteering->AutoOrient = true;
-
-		pBlackboard->SetData("Steering", pSteering);
 
 		float distance = agentInfo.Position.Distance(checkPointLocation);
 		if (distance < 3.f)
@@ -347,7 +394,7 @@ namespace BT_Action
 
 	BehaviorState HandleLoot(Blackboard* pBlackboard)
 	{
-		std::cout << "TakeLoot\n";
+		//std::cout << "TakeLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
@@ -378,7 +425,7 @@ namespace BT_Action
 		ItemInfo ii;
 		if (pInterface->Item_GetInfo(ei, ii))
 		{
-			BT_utils::SetTargetPos(pSteering, hi.Center, pInterface->Agent_GetInfo());
+			//BT_utils::SetTargetPos(pSteering, hi.Center, pInterface->Agent_GetInfo());
 
 			if (ii.Type == eItemType::GARBAGE)
 			{
@@ -415,7 +462,7 @@ namespace BT_Action
 	BehaviorState LeaveHouse(Blackboard* pBlackboard)
 	{
 
-		std::cout << "LeaveHouse\n";
+		//std::cout << "LeaveHouse\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
 		{
@@ -439,11 +486,11 @@ namespace BT_Action
 		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
 
 		auto agentInfo = pInterface->Agent_GetInfo();
-		BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
+		//BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
 		pSteering->AutoOrient = true;
 
 
-		return BT_utils::IsInRect(hi.Center, hi.Size, agentInfo.Position)
+		return BT_Utils::IsInRect(hi.Center, hi.Size, agentInfo.Position)
 			       ? BehaviorState::Running
 			       : BehaviorState::Success;
 	}
@@ -456,7 +503,7 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
-		int itemIndex = BT_utils::GetInventoryItem(pInterface, type);
+		int itemIndex = BT_Utils::GetInventoryItem(pInterface, type);
 		ItemInfo itemInfo;
 		pInterface->Inventory_GetItem(itemIndex, itemInfo);
 
@@ -482,21 +529,31 @@ namespace BT_Action
 	BehaviorState Eat(Blackboard* pBlackboard)
 	{
 
-		std::cout << "Eat\n";
+		//std::cout << "Eat\n";
 		
 		return UseItem(pBlackboard, eItemType::FOOD, HasToRemoveFood);
 	}
 
+	BehaviorState LookForLoot(Blackboard* pBlackboard)
+	{
+
+		//std::cout << "Eat\n";
+
+		pBlackboard->SetData("AngularVelocity", 1.f);
+
+		return BehaviorState::Success;
+	}
+
 	BehaviorState UseMedkit(Blackboard* pBlackboard)
 	{
-		std::cout << "UseMedkit\n";
+		//std::cout << "UseMedkit\n";
 		return UseItem(pBlackboard, eItemType::MEDKIT,
 			[](IExamInterface* pInterface, ItemInfo& itemInfo) {return pInterface->Medkit_GetHealth(itemInfo) <= 0; });
 	}
 
 	BehaviorState FaceEnemy(Blackboard* pBlackboard)
 	{
-		std::cout << "ShootEnemy\n";
+		//std::cout << "ShootEnemy\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
@@ -530,9 +587,27 @@ namespace BT_Action
 		return BehaviorState::Running;
 	}
 
+	BehaviorState SearchInHouse(Blackboard* pBlackboard)
+	{
+		return BehaviorState::Success;
+	}
+
+
+	BehaviorState Wander(Blackboard* pBlackboard)
+	{
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
+
+		WorldInfo worldInfo = pInterface->World_GetInfo();
+		pBlackboard->SetData("TargetPos", worldInfo.Center - worldInfo.Dimensions / 2);
+	}
+
 	BehaviorState ShootEnemy(Blackboard* pBlackboard)
 	{
-		std::cout << "ShootEnemy\n";
+		//std::cout << "ShootEnemy\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
@@ -566,7 +641,7 @@ namespace BT_Action
 	}
 BehaviorState Turn(Blackboard* pBlackboard)
 	{
-		std::cout << "turn\n";
+		//std::cout << "turn\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
@@ -612,7 +687,7 @@ namespace BT_Steering
 
 		virtual BehaviorState Execute(Blackboard* pBlackboard) override
 		{
-			std::cout << m_debugName << "\n";
+			//std::cout << m_debugName << "\n";
 
 			IExamInterface* pInterface;
 			if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
