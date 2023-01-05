@@ -71,6 +71,18 @@ namespace Elite
 			return false;
 		}
 
+		bool RemoveData(const std::string& name)
+		{
+			auto it = m_BlackboardData.find(name);
+			if (it == m_BlackboardData.end())
+			{
+				printf("WARNING: Data '%s' not found in Blackboard \n", name.c_str());
+				return false;
+			}
+			m_BlackboardData.erase(name);
+			return true;
+		}
+
 		//Change the data of the blackboard
 		template<typename T> bool ChangeData(const std::string& name, T data)
 		{

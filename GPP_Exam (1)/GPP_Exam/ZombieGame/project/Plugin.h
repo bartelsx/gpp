@@ -30,7 +30,7 @@ private:
 	std::vector<HouseInfo> GetHousesInFOV() const;
 	std::vector<EntityInfo> GetEntitiesInFOV() const;
 
-	SteeringPlugin_Output steering{};
+	std::deque<Elite::Vector2> m_TargetPositions{};
 
 	Elite::Vector2 m_Target = {};
 	bool m_CanRun = false; //Demo purpose

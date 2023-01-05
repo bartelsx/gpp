@@ -27,6 +27,14 @@ namespace BT_Utils
 			&& std::abs(pos.y - center.y) <= size.y / 2.f;
 	}
 
+	void AddTarget(std::deque<Vector2>* pTargetPoints, Vector2 newTarget)
+	{
+		if (pTargetPoints->empty() || std::find(pTargetPoints->begin(), pTargetPoints->end(), newTarget) == pTargetPoints->end())
+		{
+			pTargetPoints->push_front(newTarget);
+		}
+	}
+
 }
 namespace BT_Condition
 {
@@ -272,7 +280,13 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
-		pBlackboard->SetData("TargetPos", hi.Center);
+		std::deque<Vector2>* pTargetPositions;
+		if (!pBlackboard->GetData("TargetPositions", pTargetPositions))
+		{
+			return BehaviorState::Failure;
+		}
+
+		BT_Utils::AddTarget(pTargetPositions, hi.Center);
 		return BehaviorState::Success;
 	}
 
@@ -348,49 +362,56 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
-		pBlackboard->SetData("TargetPos", ei.Location);
+		std::deque<Vector2>* pTargetPositions;
+		if (!pBlackboard->GetData("TargetPositions", pTargetPositions))
+		{
+			return BehaviorState::Failure;
+		}
+
+		BT_Utils::AddTarget(pTargetPositions, ei.Location);
+
 		pBlackboard->SetData("AngularVelocity", 0.f);
 
 		return BehaviorState::Success;
 	}
 
-	BehaviorState Walk(Blackboard* pBlackboard)
-	{
-		//std::cout << "Walk\n";
+	//BehaviorState Walk(Blackboard* pBlackboard)
+	//{
+	//	//std::cout << "Walk\n";
 
-		IExamInterface* pInterface;
-		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
-		{
-			return BehaviorState::Failure;
-		}
+	//	IExamInterface* pInterface;
+	//	if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+	//	{
+	//		return BehaviorState::Failure;
+	//	}
 
-		Vector2 checkPointLocation;
-		if (!pBlackboard->GetData("TargetPos", checkPointLocation))
-		{
-			return BehaviorState::Failure;
-		}
+	//	Vector2 checkPointLocation;
+	//	if (!pBlackboard->GetData("TargetPos", checkPointLocation))
+	//	{
+	//		return BehaviorState::Failure;
+	//	}
 
-		SteeringPlugin_Output* pSteering;
-		if (!pBlackboard->GetData("Steering", pSteering))
-		{
-			return BehaviorState::Failure;
-		}
+	//	SteeringPlugin_Output* pSteering;
+	//	if (!pBlackboard->GetData("Steering", pSteering))
+	//	{
+	//		return BehaviorState::Failure;
+	//	}
 
-		auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
+	//	auto nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(checkPointLocation);
 
-		auto agentInfo = pInterface->Agent_GetInfo();
+	//	auto agentInfo = pInterface->Agent_GetInfo();
 
-		//BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
-		pSteering->AutoOrient = true;
+	//	//BT_utils::SetTargetPos(pSteering, nextTargetPos, agentInfo);
+	//	pSteering->AutoOrient = true;
 
-		float distance = agentInfo.Position.Distance(checkPointLocation);
-		if (distance < 3.f)
-		{
-			return BehaviorState::Success;
-		}
+	//	float distance = agentInfo.Position.Distance(checkPointLocation);
+	//	if (distance < 3.f)
+	//	{
+	//		return BehaviorState::Success;
+	//	}
 
-		return BehaviorState::Running;
-	}
+	//	return BehaviorState::Running;
+	//}
 
 	BehaviorState HandleLoot(Blackboard* pBlackboard)
 	{
@@ -536,10 +557,50 @@ namespace BT_Action
 
 	BehaviorState LookForLoot(Blackboard* pBlackboard)
 	{
+		//std::cout << "LookForLoot\n";
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
 
-		//std::cout << "Eat\n";
+		HouseInfo hi;
+		if (!pBlackboard->GetData("HouseToVisit", hi))
+		{
+			return BehaviorState::Failure;
+		}
 
+		std::vector<Vector2> visitedHouses;
+		if (!pBlackboard->GetData("VisitedHouses", visitedHouses))
+		{
+			visitedHouses = std::vector<Vector2>();
+		}
+
+		if (std::find(visitedHouses.begin(), visitedHouses.end(), hi.Center) != visitedHouses.end())
+		{
+			return BehaviorState::Failure;
+		}
+
+		std::deque<Vector2>* pTargetPositions;
+		if (!pBlackboard->GetData("TargetPositions", pTargetPositions))
 		pBlackboard->SetData("AngularVelocity", 1.f);
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		Vector2 spacing{ hi.Size.x > 22.f ? 10.f : (hi.Size.x / 2.f - 2.f),hi.Size.y > 22.f ? 10.f : (hi.Size.y / 2.f - 2.f) };
+		Vector2 corner1{ hi.Center - hi.Size / 2.f + spacing};
+		Vector2 corner3{ hi.Center + hi.Size / 2.f - spacing};
+		Vector2 corner2{ corner1.x, corner3.y };
+		Vector2 corner4{ corner3.x, corner1.y };
+
+		BT_Utils::AddTarget(pTargetPositions, corner1);
+		BT_Utils::AddTarget(pTargetPositions, corner2);
+		BT_Utils::AddTarget(pTargetPositions, corner3);
+		BT_Utils::AddTarget(pTargetPositions, corner4);
+
+		//std::sort(pTargetPositions->begin(), pTargetPositions->end(), [agentInfo](Vector2 c1, Vector2 c2) {return c1.Distance(agentInfo.Position) < c2.Distance(agentInfo.Position); });
+		pBlackboard->RemoveData("HouseToVisit");
+		visitedHouses.push_back(hi.Center);
+		pBlackboard->SetData("VisitedHouses", visitedHouses);
 
 		return BehaviorState::Success;
 	}
@@ -601,8 +662,15 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
+		std::deque<Vector2>* pTargetPositions;
+		if (!pBlackboard->GetData("TargetPositions", pTargetPositions))
+		{
+			return BehaviorState::Failure;
+		}
+
 		WorldInfo worldInfo = pInterface->World_GetInfo();
-		pBlackboard->SetData("TargetPos", worldInfo.Center - worldInfo.Dimensions / 2);
+		BT_Utils::AddTarget(pTargetPositions, worldInfo.Center + worldInfo.Dimensions / 2);
+		return BehaviorState::Success;
 	}
 
 	BehaviorState ShootEnemy(Blackboard* pBlackboard)

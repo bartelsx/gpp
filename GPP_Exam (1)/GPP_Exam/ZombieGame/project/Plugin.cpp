@@ -47,9 +47,7 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 				//	}
 				//),
 
-				new BehaviorAction(BT_Action::Wander),
-
-				////If Gun is available, check for enemy and shoot him
+				//If Gun is available, check for enemy and shoot him
 				//new BehaviorSelector
 				//(
 				//	{
@@ -68,7 +66,8 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 				//	}
 				//),
 
-
+				new BehaviorAction(BT_Action::Wander),
+				
 				//Check if there is an house in FOV, if so, go inside and collect loot
 				new BehaviorSelector
 				(
@@ -205,13 +204,11 @@ void Plugin::Update(float dt)
 //This function calculates the new SteeringOutput, called once per frame
 SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 {
-	//auto steering = SteeringPlugin_Output();
+	auto steering = SteeringPlugin_Output();
 
-
-
-	m_pBlackboard->SetData("Steering", &steering);
 	m_pBlackboard->SetData("DeltaT", dt);
 	m_pBlackboard->SetData("AngularVelocity", 0.f);
+	m_pBlackboard->SetData("TargetPositions", &m_TargetPositions);
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	auto agentInfo = m_pInterface->Agent_GetInfo();
@@ -272,7 +269,25 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	}
 
 	//Simple Seek Behaviour (towards Target)
-	m_pBlackboard->GetData("TargetPos", nextTargetPos);
+
+	if (! m_TargetPositions.empty())
+	{
+		nextTargetPos = m_TargetPositions[0];
+		while (agentInfo.Position.Distance(nextTargetPos) < 0.5f)
+		{
+			m_TargetPositions.pop_front();
+			nextTargetPos = m_TargetPositions[0];
+			if (m_TargetPositions.empty())
+			{
+				break;
+			}
+		}
+	}
+
+	if (m_TargetPositions.empty())
+	{
+		m_pBlackboard->GetData("TargetPos", nextTargetPos);
+	}
 
 	nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(nextTargetPos);
 	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
@@ -281,9 +296,9 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	m_pBlackboard->GetData("AngularVelocity", steering.AngularVelocity);
 	steering.AutoOrient = steering.AngularVelocity == 0;
 
-	std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << "\n";
+	std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << ", " << m_TargetPositions.size() << " positions in queue, agent location: " << agentInfo.Position.x << ", " << agentInfo.Position.y << "\n";
 
-	if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
+	if (Distance(nextTargetPos, agentInfo.Position) < 0.1f)
 	{
 		steering.LinearVelocity = Elite::ZeroVector2;
 	}
@@ -307,6 +322,10 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 void Plugin::Render(float dt) const
 {
 	//This Render function should only contain calls to Interface->Draw_... functions
+	for (auto p : m_TargetPositions)
+	{
+		m_pInterface->Draw_SolidCircle(p, .7f, { 0,0 }, { 0,1,1 });
+	}
 	m_pInterface->Draw_SolidCircle(m_Target, .7f, { 0,0 }, { 1, 0, 0 });
 }
 
