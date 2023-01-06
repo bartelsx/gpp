@@ -23,81 +23,75 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 	//Build behavior tree
 	m_pBlackboard = new Blackboard();
 	m_pBlackboard->AddData("Interface", m_pInterface);
-
 	m_pBehaviorTree = new BehaviorTree
-		(m_pBlackboard,
-			new BehaviorSequence
-			(
-				{
-				//Eat if there is food and Energy is low
-				new BehaviorSelector
-				(
-					{
-						new BehaviorInvertConditional(BT_Condition::CheckEnergy),
-						new BehaviorAction(BT_Action::Eat)
-					}
-				),
+	(m_pBlackboard,
+	 new BehaviorSequence
+	 (
+		 {
 
-				//Use Medkit if available and Health is low
-				new BehaviorSelector
-				(
-					{
-						new BehaviorInvertConditional(BT_Condition::CheckHealth),
-						new BehaviorAction(BT_Action::UseMedkit)
-					}
-				),
+		 	 new BehaviorAction(BT_Action::Wander),
 
-				//If Gun is available, check for enemy and shoot him
-				new BehaviorSelector
-				(
-					{
-						new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
-									new BehaviorAction(BT_Action::Turn),
-						new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
-							new BehaviorSequence
-							(
-								{
-									new BehaviorAction(BT_Action::FaceEnemy),
-									new BehaviorAction(BT_Action::ShootEnemy)
-								}
-							)
+		 	//Eat if there is food and Energy is low
+			 new BehaviorSelector
+			 (
+				 {
+					 new BehaviorInvertConditional(BT_Condition::CheckEnergy),
+					 new BehaviorAction(BT_Action::Eat)
+				 }
+			 ),
 
+			 //Use Medkit if available and Health is low
+			 new BehaviorSelector
+			 (
+				 {
+					 new BehaviorInvertConditional(BT_Condition::CheckHealth),
+					 new BehaviorAction(BT_Action::UseMedkit)
+				 }
+			 ),
 
-					}
-				),
+			 //If Gun is available, check for enemy and shoot him
+			 new BehaviorMaskFailure( new BehaviorSequence
+			 (
+				 {
+					 new BehaviorConditional(BT_Condition::CheckForGunInInventory),
+					 new BehaviorAction(BT_Action::Turn),
+					 new BehaviorConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
+					 new BehaviorAction(BT_Action::FaceEnemy),
+					 new BehaviorAction(BT_Action::ShootEnemy)
+				 }
+			 )),
 
-				new BehaviorAction(BT_Action::Wander),
-				
-				//Check if there is an house in FOV, if so, go inside and collect loot
-				new BehaviorSelector
-				(
-					{
-						new BehaviorInvertConditional(BT_Condition::IsHouseInFOV),
-						new BehaviorAction(BT_Action::MoveToHouse)
-					}
-				),
+			 //Check if there is an house in FOV, if so, go inside and collect loot
+			 new BehaviorSelector
+			 (
+				 {
+					 new BehaviorInvertConditional(BT_Condition::IsHouseInFOV),
+					 new BehaviorAction(BT_Action::MoveToHouse)
+				 }
+			 ),
 
-				new BehaviorSelector
-				(
-					{
-						new BehaviorInvertConditional(BT_Condition::IsAgentInHouse),
-						new BehaviorAction(BT_Action::LookForLoot)
-					}
-				),
+			 new BehaviorSelector
+			 (
+				 {
+					 new BehaviorInvertConditional(BT_Condition::IsAgentInHouse),
+					 new BehaviorAction(BT_Action::LookForLoot)
+				 }
+			 ),
 
 
-				//If loot in FOV, try to grab it, if too far, set TargetPos to move to loot
-				new BehaviorSelector
-				(
-					{
-						new BehaviorInvertConditional(BT_Condition::IsLootInFOV),
-						new BehaviorAction(BT_Action::TryGrabLoot),
-						new BehaviorAction(BT_Action::MoveToLoot)
-					}
-				)
-			}
-		)
+			 //If loot in FOV, try to grab it, if too far, set TargetPos to move to loot
+			 new BehaviorSelector
+			 (
+				 {
+					 new BehaviorInvertConditional(BT_Condition::IsLootInFOV),
+					 new BehaviorAction(BT_Action::TryGrabLoot),
+					 new BehaviorAction(BT_Action::MoveToLoot)
+				 }
+			 )
+		 }
+	 )
 	);
+
 }
 
 //Called only once
@@ -206,9 +200,10 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 {
 	auto steering = SteeringPlugin_Output();
 
-	m_pBlackboard->SetData("DeltaT", dt);
-	m_pBlackboard->SetData("AngularVelocity", 0.f);
-	m_pBlackboard->SetData("TargetPositions", &m_TargetPositions);
+	m_pBlackboard->SetData(BB::DeltaT, dt);
+	m_pBlackboard->SetData(BB::AngularVelocity, 0.f);
+	m_pBlackboard->SetData(BB::AutoOrient, true);
+	m_pBlackboard->SetData(BB::TargetPositions, &m_TargetPositions);
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	auto agentInfo = m_pInterface->Agent_GetInfo();
@@ -273,40 +268,19 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	// Erase all target points near to agent
 	for (auto it = m_TargetPositions.begin(); it != m_TargetPositions.end();)
 	{
-		if ((* it).Distance(agentInfo.Position) <= 1.f)
+		if ((* it).Distance(agentInfo.Position) <= agentInfo.GrabRange * .8f)
 			it = m_TargetPositions.erase(it);
 		else
 			++it;
 	}
 
-	//if (! m_TargetPositions.empty())
-	//{
-	//	nextTargetPos = m_TargetPositions[0];
-	//	
-	//	while (agentInfo.Position.Distance(nextTargetPos) < 0.5f)
-	//	{
-	//		m_TargetPositions.pop_front();
-	//		nextTargetPos = m_TargetPositions[0];
-	//		if (m_TargetPositions.empty())
-	//		{
-	//			break;
-	//		}
-	//	}
-	//}
-
 	nextTargetPos = m_TargetPositions[0];
-
-	if (m_TargetPositions.empty())
-	{
-		m_pBlackboard->GetData("TargetPos", nextTargetPos);
-	}
-
 	nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(nextTargetPos);
 	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
 	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
-	m_pBlackboard->GetData("AngularVelocity", steering.AngularVelocity);
-	steering.AutoOrient = steering.AngularVelocity == 0;
+	m_pBlackboard->GetData(BB::AngularVelocity, steering.AngularVelocity);
+	m_pBlackboard->GetData(BB::AutoOrient, steering.AutoOrient);
 
 	std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << ", " << m_TargetPositions.size() << " positions in queue, agent location: " << agentInfo.Position.x << ", " << agentInfo.Position.y << "\n";
 
