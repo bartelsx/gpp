@@ -29,42 +29,42 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 			new BehaviorSequence
 			(
 				{
-				//	//Eat if there is food and Energy is low
-				//	new BehaviorSelector
-				//	(
-				//		{
-				//			new BehaviorInvertConditional(BT_Condition::CheckEnergy),
-				//			new BehaviorAction(BT_Action::Eat)
-				//		}
-				//	),
+				//Eat if there is food and Energy is low
+				new BehaviorSelector
+				(
+					{
+						new BehaviorInvertConditional(BT_Condition::CheckEnergy),
+						new BehaviorAction(BT_Action::Eat)
+					}
+				),
 
-				////Use Medkit if available and Health is low
-				//new BehaviorSelector
-				//(
-				//	{
-				//		new BehaviorInvertConditional(BT_Condition::CheckHealth),
-				//		new BehaviorAction(BT_Action::UseMedkit)
-				//	}
-				//),
+				//Use Medkit if available and Health is low
+				new BehaviorSelector
+				(
+					{
+						new BehaviorInvertConditional(BT_Condition::CheckHealth),
+						new BehaviorAction(BT_Action::UseMedkit)
+					}
+				),
 
 				//If Gun is available, check for enemy and shoot him
-				//new BehaviorSelector
-				//(
-				//	{
-				//		new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
-				//					new BehaviorAction(BT_Action::Turn),
-				//		new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
-				//			new BehaviorSequence
-				//			(
-				//				{
-				//					new BehaviorAction(BT_Action::FaceEnemy),
-				//					new BehaviorAction(BT_Action::ShootEnemy)
-				//				}
-				//			)
+				new BehaviorSelector
+				(
+					{
+						new BehaviorInvertConditional(BT_Condition::CheckForGunInInventory),
+									new BehaviorAction(BT_Action::Turn),
+						new BehaviorInvertConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
+							new BehaviorSequence
+							(
+								{
+									new BehaviorAction(BT_Action::FaceEnemy),
+									new BehaviorAction(BT_Action::ShootEnemy)
+								}
+							)
 
 
-				//	}
-				//),
+					}
+				),
 
 				new BehaviorAction(BT_Action::Wander),
 				
@@ -270,19 +270,31 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 
 	//Simple Seek Behaviour (towards Target)
 
-	if (! m_TargetPositions.empty())
+	// Erase all target points near to agent
+	for (auto it = m_TargetPositions.begin(); it != m_TargetPositions.end();)
 	{
-		nextTargetPos = m_TargetPositions[0];
-		while (agentInfo.Position.Distance(nextTargetPos) < 0.5f)
-		{
-			m_TargetPositions.pop_front();
-			nextTargetPos = m_TargetPositions[0];
-			if (m_TargetPositions.empty())
-			{
-				break;
-			}
-		}
+		if ((* it).Distance(agentInfo.Position) <= 1.f)
+			it = m_TargetPositions.erase(it);
+		else
+			++it;
 	}
+
+	//if (! m_TargetPositions.empty())
+	//{
+	//	nextTargetPos = m_TargetPositions[0];
+	//	
+	//	while (agentInfo.Position.Distance(nextTargetPos) < 0.5f)
+	//	{
+	//		m_TargetPositions.pop_front();
+	//		nextTargetPos = m_TargetPositions[0];
+	//		if (m_TargetPositions.empty())
+	//		{
+	//			break;
+	//		}
+	//	}
+	//}
+
+	nextTargetPos = m_TargetPositions[0];
 
 	if (m_TargetPositions.empty())
 	{
