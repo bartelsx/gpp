@@ -15,9 +15,7 @@ namespace BB
 	const std::string HouseToVisit = "HouseToVisit";
 	const std::string TargetPositions = "TargetPositions";
 	const std::string AngularVelocity = "AngularVelocity";
-	const std::string AutoOrient = "AutoOrient";
 	const std::string DeltaT = "DeltaT";
-	const std::string InventorySlot = "InventorySlot";
 }
 
 namespace BT_Utils
@@ -318,9 +316,6 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
-		int inventorySlot = 0;
-		pBlackboard->GetData(BB::InventorySlot, inventorySlot);
-
 		auto agentInfo = pInterface->Agent_GetInfo();
 
 		if (agentInfo.Position.Distance(ei.Location) <= agentInfo.GrabRange)
@@ -340,11 +335,15 @@ namespace BT_Action
 					{
 						pInterface->Item_Grab(ei, ii);
 
-						if (inventorySlot < pInterface->Inventory_GetCapacity())
+						for (UINT idx=0; idx < pInterface->Inventory_GetCapacity(); ++idx)
 						{
-							pInterface->Inventory_AddItem(inventorySlot, ii);
-							++inventorySlot;
-							pBlackboard->SetData("InventorySlot", inventorySlot);
+							ItemInfo dummy;
+							if (pInterface->Inventory_GetItem(idx, dummy) == false)
+							{
+								//found empty slot
+								pInterface->Inventory_AddItem(idx, ii);
+								break;
+							}
 						}
 
 					}
@@ -362,7 +361,7 @@ namespace BT_Action
 
 	BehaviorState MoveToLoot(Blackboard* pBlackboard)
 	{
-		//std::cout << "MoveToLoot\n";
+		std::cout << "MoveToLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
 		{
@@ -429,7 +428,7 @@ namespace BT_Action
 
 	BehaviorState LookForLoot(Blackboard* pBlackboard)
 	{
-		//std::cout << "LookForLoot\n";
+		std::cout << "LookForLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
 		{
@@ -486,7 +485,7 @@ namespace BT_Action
 
 	BehaviorState FaceEnemy(Blackboard* pBlackboard)
 	{
-		//std::cout << "FaceEnemy\n";
+		std::cout << "FaceEnemy\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
@@ -501,17 +500,33 @@ namespace BT_Action
 		}
 
 		auto agentInfo = pInterface->Agent_GetInfo();
-		pBlackboard->SetData(BB::AutoOrient, false);
 
 		const Elite::Vector2 toTarget{ ei.Location - agentInfo.Position };
 		const float angle{ 180 / float(M_PI) * agentInfo.Orientation };
 		const float angleTarget{ 180 / float(M_PI) * atan2(toTarget.y, toTarget.x) };
 
-		if (angle - angleTarget > 5) pBlackboard->SetData(BB::AngularVelocity, -5);
-		else if (angle - angleTarget < -5)  pBlackboard->SetData(BB::AngularVelocity, 5);
-		else return BehaviorState::Success;
-		
-		return BehaviorState::Running;
+		auto av = min(agentInfo.MaxAngularSpeed, max(-agentInfo.MaxAngularSpeed, angleTarget - angle));
+		//auto av = angleTarget - angle < 0 ? -5.f : 5.f;
+
+
+		//if (angle - angleTarget > 5) pBlackboard->SetData(BB::AngularVelocity, -5);
+		//else if (angle - angleTarget < -5)  pBlackboard->SetData(BB::AngularVelocity, 5);
+		//else return BehaviorState::Success;
+		BehaviorState result;
+		if (abs(angleTarget - angle) < 3.f)
+		{
+			av = 0;
+			result = BehaviorState::Success;
+		}
+		else
+		{
+			result = BehaviorState::Running;
+		}
+
+		//std::cout << "FaceEnemy: angle=" << angle << ", angleTarget=" << angleTarget << ", angularVelocity=" << av  << "\n";
+
+		pBlackboard->SetData(BB::AngularVelocity, av);
+		return result;
 	}
 
 	BehaviorState SearchInHouse(Blackboard* pBlackboard)
@@ -549,7 +564,7 @@ namespace BT_Action
 
 	BehaviorState ShootEnemy(Blackboard* pBlackboard)
 	{
-		//std::cout << "ShootEnemy\n";
+		std::cout << "ShootEnemy\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
@@ -564,13 +579,12 @@ namespace BT_Action
 		}
 
 		auto agentInfo = pInterface->Agent_GetInfo();
-		pBlackboard->SetData(BB::AutoOrient, false);
 
 		auto result = UseItem(pBlackboard, eItemType::SHOTGUN, [](IExamInterface* pInterface, ItemInfo& itemInfo) {return pInterface->Weapon_GetAmmo(itemInfo) <= 0; });
 
 		if (result == BehaviorState::Failure)
 		{
-			 result = UseItem(pBlackboard, eItemType::PISTOL, [](IExamInterface* pInterface, ItemInfo& itemInfo) {return pInterface->Weapon_GetAmmo(itemInfo) <= 0; });
+			result = UseItem(pBlackboard, eItemType::PISTOL, [](IExamInterface* pInterface, ItemInfo& itemInfo) {return pInterface->Weapon_GetAmmo(itemInfo) <= 0; });
 		}
 
 		return result;
@@ -586,7 +600,6 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
-		pBlackboard->SetData(BB::AutoOrient, false);
 		pBlackboard->SetData(BB::AngularVelocity,1.f);
 			
 		return BehaviorState::Success;

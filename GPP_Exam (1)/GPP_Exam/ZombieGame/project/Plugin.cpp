@@ -194,76 +194,19 @@ void Plugin::Update(float dt)
 	}
 }
 
-//Update
-//This function calculates the new SteeringOutput, called once per frame
 SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 {
 	auto steering = SteeringPlugin_Output();
+	Vector2 nextTargetPos{};
 
 	m_pBlackboard->SetData(BB::DeltaT, dt);
 	m_pBlackboard->SetData(BB::AngularVelocity, 0.f);
-	m_pBlackboard->SetData(BB::AutoOrient, true);
 	m_pBlackboard->SetData(BB::TargetPositions, &m_TargetPositions);
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	auto agentInfo = m_pInterface->Agent_GetInfo();
 
-	Vector2 nextTargetPos{};
-
 	m_pBehaviorTree->Update(dt);
-
-	//m_pBlackboard->GetData("Steering", steering);
-
-	//Use the navmesh to calculate the next navmesh point
-	//auto nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(checkpointLocation);
-
-	//OR, Use the mouse target
-	//auto nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(m_Target); //Uncomment this to use mouse position as guidance
-
-	auto vHousesInFOV = GetHousesInFOV();//uses m_pInterface->Fov_GetHouseByIndex(...)
-	auto vEntitiesInFOV = GetEntitiesInFOV(); //uses m_pInterface->Fov_GetEntityByIndex(...)
-
-	for (auto& e : vEntitiesInFOV)
-	{
-		if (e.Type == eEntityType::PURGEZONE)
-		{
-			PurgeZoneInfo zoneInfo;
-			m_pInterface->PurgeZone_GetInfo(e, zoneInfo);
-			//std::cout << "Purge Zone in FOV:" << e.Location.x << ", "<< e.Location.y << "---Radius: "<< zoneInfo.Radius << std::endl;
-		}
-	}
-
-	//INVENTORY USAGE DEMO
-	//********************
-
-	if (m_GrabItem)
-	{
-		ItemInfo item;
-		//Item_Grab > When DebugParams.AutoGrabClosestItem is TRUE, the Item_Grab function returns the closest item in range
-		//Keep in mind that DebugParams are only used for debugging purposes, by default this flag is FALSE
-		//Otherwise, use GetEntitiesInFOV() to retrieve a vector of all entities in the FOV (EntityInfo)
-		//Item_Grab gives you the ItemInfo back, based on the passed EntityHash (retrieved by GetEntitiesInFOV)
-		if (m_pInterface->Item_Grab({}, item))
-		{
-			//Once grabbed, you can add it to a specific inventory slot
-			//Slot must be empty
-			m_pInterface->Inventory_AddItem(m_InventorySlot, item);
-		}
-	}
-
-	if (m_UseItem)
-	{
-		//Use an item (make sure there is an item at the given inventory slot)
-		m_pInterface->Inventory_UseItem(m_InventorySlot);
-	}
-
-	if (m_RemoveItem)
-	{
-		//Remove an item from a inventory slot
-		m_pInterface->Inventory_RemoveItem(m_InventorySlot);
-	}
-
-	//Simple Seek Behaviour (towards Target)
 
 	// Erase all target points near to agent
 	for (auto it = m_TargetPositions.begin(); it != m_TargetPositions.end();)
@@ -274,35 +217,33 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 			++it;
 	}
 
+	//Set steering data
 	nextTargetPos = m_TargetPositions[0];
 	nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(nextTargetPos);
 	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
 	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
 	m_pBlackboard->GetData(BB::AngularVelocity, steering.AngularVelocity);
-	m_pBlackboard->GetData(BB::AutoOrient, steering.AutoOrient);
+	steering.AutoOrient = steering.AngularVelocity == 0.f;
 
-	std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << ", " << m_TargetPositions.size() << " positions in queue, agent location: " << agentInfo.Position.x << ", " << agentInfo.Position.y << "\n";
+	//std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << ", " << m_TargetPositions.size() << " positions in queue, agent location: " << agentInfo.Position.x << ", " << agentInfo.Position.y << "\n";
+	std::cout << "AngularVelocity : " << steering.AngularVelocity << ", AutoOrient : " << steering.AutoOrient << "\n";
 
 	if (Distance(nextTargetPos, agentInfo.Position) < 0.1f)
 	{
 		steering.LinearVelocity = Elite::ZeroVector2;
 	}
 
-	//steering.AngularVelocity = m_AngSpeed; //Rotate your character to inspect the world while walking
-	//steering.AutoOrient = true; //Setting AutoOrient to TRue overrides the AngularVelocity
-
 	steering.RunMode = m_CanRun; //If RunMode is True > MaxLinSpd is increased for a limited time (till your stamina runs out)
 
-	//SteeringPlugin_Output is works the exact same way a SteeringBehaviour output
 
-//@End (Demo Purposes)
-	m_GrabItem = false; //Reset State
-	m_UseItem = false;
-	m_RemoveItem = false;
-
+	//@End (Demo Purposes)
 	return steering;
 }
+
+//Update
+
+//This function calculates the new SteeringOutput, called once per frame
 
 //This function should only be used for rendering debug elements
 void Plugin::Render(float dt) const
