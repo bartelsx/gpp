@@ -1,0 +1,3 @@
+PLEASE INSTALL THE PATCH GPP_Exam_Patch230103 BEFORE THIS!!!!
+
+- Fixed bug where asking the ammo for a shotgun failed.

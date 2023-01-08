@@ -12,7 +12,6 @@
 
 #include "EBlackboard.h"
 #include "EDecisionMaking.h"
-#include "SteeringBehaviors.h"
 
 namespace Elite
 {

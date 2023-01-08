@@ -12,10 +12,12 @@ namespace BB
 	const std::string Enemy = "Enemy";
 	const std::string ItemToPick = "ItemToPick";
 	const std::string VisitedHouses = "VisitedHouses";
+	const std::string PurgeZone = "PurgeZone";
 	const std::string HouseToVisit = "HouseToVisit";
 	const std::string TargetPositions = "TargetPositions";
 	const std::string AngularVelocity = "AngularVelocity";
 	const std::string DeltaT = "DeltaT";
+	const std::string CanRun = "CanRun";
 }
 
 namespace BT_Utils
@@ -49,31 +51,17 @@ namespace BT_Utils
 }
 namespace BT_Condition
 {
-	bool IsEnemyInFOV(Blackboard* pBlackboard, eEnemyType type)
+	bool IsEntityInFOV(IExamInterface* pInterface, eEntityType entityType, EntityInfo& entityInfo)
 	{
-		IExamInterface* pInterface;
-
-		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
-		{
-			return false;
-		}
-
 		EntityInfo ei = {};
 		for (int i = 0;; ++i)
 		{
 			if (pInterface->Fov_GetEntityByIndex(i, ei))
 			{
-				if (ei.Type == eEntityType::ENEMY)
+				if (ei.Type == entityType)
 				{
-					EnemyInfo enemyInfo;
-					pInterface->Enemy_GetInfo(ei, enemyInfo);
-					if (enemyInfo.Type == type)
-					{
-						pInterface->Enemy_GetInfo(ei, enemyInfo);
-
-						pBlackboard->SetData(BB::Enemy, enemyInfo);
-						return true;
-					}
+					entityInfo = ei;
+					return true;
 				}
 			}
 			else
@@ -84,16 +72,41 @@ namespace BT_Condition
 		return false;
 	}
 
+	bool IsEnemyInFOV(Blackboard* pBlackboard, eEnemyType type)
+	{
+		IExamInterface* pInterface;
+
+		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
+		{
+			return false;
+		}
+
+		EntityInfo ei = {};
+		if (IsEntityInFOV(pInterface, eEntityType::ENEMY, ei))
+		{
+			EnemyInfo enemyInfo;
+			pInterface->Enemy_GetInfo(ei, enemyInfo);
+			if (enemyInfo.Type == type)
+			{
+				pInterface->Enemy_GetInfo(ei, enemyInfo);
+
+				pBlackboard->SetData(BB::Enemy, enemyInfo);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	bool IsFastEnemyInFOV(Blackboard* pBlackboard)
 	{
-		//std::cout << "zombie fast\n";
+		////std::cout << "zombie fast\n";
 
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_RUNNER);
 	}
 
 	bool IsSlowEnemyInFOV(Blackboard* pBlackboard)
 	{
-		//std::cout << "zombie slow\n";
+		////std::cout << "zombie slow\n";
 
 		return IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_NORMAL) || IsEnemyInFOV(pBlackboard, eEnemyType::ZOMBIE_HEAVY);
 	}
@@ -214,20 +227,10 @@ namespace BT_Condition
 		}
 
 		EntityInfo ei = {};
-		for (int i = 0;; ++i)
+		if (IsEntityInFOV(pInterface, eEntityType::ITEM, ei))
 		{
-			if (pInterface->Fov_GetEntityByIndex(i, ei))
-			{
-				if (ei.Type == eEntityType::ITEM)
-				{
-					pBlackboard->SetData(BB::ItemToPick, ei);
-					return true;
-				}
-			}
-			else
-			{
-				break;
-			}
+			pBlackboard->SetData(BB::ItemToPick, ei);
+			return true;
 		}
 		return false;
 	}
@@ -256,7 +259,28 @@ namespace BT_Condition
 		return false;
 	}
 
+	bool IsPurgeZoneInFOV(Blackboard* pBlackboard)
+	{
+		//std::cout << "IsPurgeZoneInFOV\n";
+		IExamInterface* pInterface;
 
+		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
+		{
+			return false;
+		}
+
+		EntityInfo ei;
+		if (IsEntityInFOV(pInterface, eEntityType::PURGEZONE, ei))
+		{
+			PurgeZoneInfo pi;
+			if (pInterface->PurgeZone_GetInfo(ei, pi))
+			{
+				pBlackboard->SetData(BB::PurgeZone, pi);
+				return true;
+			}
+		}
+		return false;
+	}
 }
 
 namespace BT_Action
@@ -361,7 +385,7 @@ namespace BT_Action
 
 	BehaviorState MoveToLoot(Blackboard* pBlackboard)
 	{
-		std::cout << "MoveToLoot\n";
+		//std::cout << "MoveToLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
 		{
@@ -428,7 +452,7 @@ namespace BT_Action
 
 	BehaviorState LookForLoot(Blackboard* pBlackboard)
 	{
-		std::cout << "LookForLoot\n";
+		//std::cout << "LookForLoot\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
 		{
@@ -453,8 +477,10 @@ namespace BT_Action
 		}
 
 		std::deque<Vector2>* pTargetPositions;
-		if (!pBlackboard->GetData(BB::TargetPositions, pTargetPositions))
-		pBlackboard->SetData(BB::AngularVelocity, 1.f);
+		pBlackboard->GetData(BB::TargetPositions, pTargetPositions);
+
+		pBlackboard->SetData(BB::AngularVelocity, 1.57f);
+
 		auto agentInfo = pInterface->Agent_GetInfo();
 
 		Vector2 spacing{ hi.Size.x > 22.f ? 10.f : (hi.Size.x / 2.f - 2.f),hi.Size.y > 22.f ? 10.f : (hi.Size.y / 2.f - 2.f) };
@@ -471,6 +497,10 @@ namespace BT_Action
 		//std::sort(pTargetPositions->begin(), pTargetPositions->end(), [agentInfo](Vector2 c1, Vector2 c2) {return c1.Distance(agentInfo.Position) < c2.Distance(agentInfo.Position); });
 		pBlackboard->RemoveData(BB::HouseToVisit);
 		visitedHouses.push_back(hi.Center);
+		if (visitedHouses.size() > 4)
+		{
+			visitedHouses.erase(visitedHouses.begin());
+		}
 		pBlackboard->SetData(BB::VisitedHouses, visitedHouses);
 
 		return BehaviorState::Success;
@@ -485,7 +515,7 @@ namespace BT_Action
 
 	BehaviorState FaceEnemy(Blackboard* pBlackboard)
 	{
-		std::cout << "FaceEnemy\n";
+		//std::cout << "FaceEnemy\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
@@ -499,15 +529,30 @@ namespace BT_Action
 			return BehaviorState::Failure;
 		}
 
+		std::deque<Vector2>* pTargetPositions;
+		pBlackboard->GetData(BB::TargetPositions, pTargetPositions);
+
 		auto agentInfo = pInterface->Agent_GetInfo();
 
 		const Elite::Vector2 toTarget{ ei.Location - agentInfo.Position };
 		const float angle{ 180 / float(M_PI) * agentInfo.Orientation };
 		const float angleTarget{ 180 / float(M_PI) * atan2(toTarget.y, toTarget.x) };
+		float angleToRotate = angleTarget - angle;
 
-		auto av = min(agentInfo.MaxAngularSpeed, max(-agentInfo.MaxAngularSpeed, angleTarget - angle));
+		if (angleToRotate > 180.f)
+		{
+			angleToRotate -= 360.f;
+		}
+		if (angleToRotate < -180.f)
+		{
+			angleToRotate += 360.f;
+		}
+
+
+		auto av = min(agentInfo.MaxAngularSpeed, max(-agentInfo.MaxAngularSpeed, angleToRotate/10.f));
 		//auto av = angleTarget - angle < 0 ? -5.f : 5.f;
 
+		//std::cout << "angle: " << angle << ", angleTarget: " << angleTarget << ", angularVelocity: " << av << "\n";
 
 		//if (angle - angleTarget > 5) pBlackboard->SetData(BB::AngularVelocity, -5);
 		//else if (angle - angleTarget < -5)  pBlackboard->SetData(BB::AngularVelocity, 5);
@@ -520,10 +565,17 @@ namespace BT_Action
 		}
 		else
 		{
+			auto vectorlToEnemy = ei.Location - agentInfo.Position;
+
+			if (vectorlToEnemy.Magnitude() < 5.f)
+			{
+				BT_Utils::AddTarget(pTargetPositions, { -10.f * vectorlToEnemy.GetNormalized() + agentInfo.Position });
+				pBlackboard->SetData(BB::CanRun, true);
+			}
 			result = BehaviorState::Running;
 		}
 
-		//std::cout << "FaceEnemy: angle=" << angle << ", angleTarget=" << angleTarget << ", angularVelocity=" << av  << "\n";
+		////std::cout << "FaceEnemy: angle=" << angle << ", angleTarget=" << angleTarget << ", angularVelocity=" << av  << "\n";
 
 		pBlackboard->SetData(BB::AngularVelocity, av);
 		return result;
@@ -550,21 +602,26 @@ namespace BT_Action
 		}
 
 		WorldInfo worldInfo = pInterface->World_GetInfo();
-		if (pTargetPositions->size() <= 1)
+		if (pTargetPositions->size() < 1)
 		{
-			Vector2 d4{ worldInfo.Dimensions / 4.f };
-			BT_Utils::AddTarget(pTargetPositions, worldInfo.Center);
-			BT_Utils::AddTarget(pTargetPositions, worldInfo.Center - d4);
-			BT_Utils::AddTarget(pTargetPositions, worldInfo.Center + Vector2{ -d4.x, d4.y });
-			BT_Utils::AddTarget(pTargetPositions, worldInfo.Center + Vector2{d4.x, -d4.y});
-			BT_Utils::AddTarget(pTargetPositions, worldInfo.Center + d4);
+			float angles[] = { 90.f, 180.f, 270.f, 0.f, 225.f, 135.f, 315.f, 45.f  };
+
+			float d = worldInfo.Dimensions.Magnitude() / 4.f;
+
+			for (const float angle : angles)
+			{
+				const float angleRadians = angle / 180.f * M_PI;
+
+				BT_Utils::AddTarget(pTargetPositions, worldInfo.Center + Vector2{d * std::cosf(angleRadians), d * std::sinf(angleRadians)});
+			}
+			
 		}
 		return BehaviorState::Success;
 	}
 
 	BehaviorState ShootEnemy(Blackboard* pBlackboard)
 	{
-		std::cout << "ShootEnemy\n";
+		//std::cout << "ShootEnemy\n";
 
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
@@ -590,6 +647,24 @@ namespace BT_Action
 		return result;
 	}
 
+	BehaviorState RunAway(Blackboard* pBlackboard)
+	{
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
+		{
+			return BehaviorState::Failure;
+		}
+
+		EnemyInfo ei;
+		if (!pBlackboard->GetData(BB::Enemy, ei))
+		{
+			return BehaviorState::Failure;
+		}
+
+		AgentInfo agentInfo = pInterface->Agent_GetInfo();
+
+	}
+
 	BehaviorState Turn(Blackboard* pBlackboard)
 	{
 		//std::cout << "turn\n";
@@ -605,95 +680,34 @@ namespace BT_Action
 		return BehaviorState::Success;
 	}
 
-}
-
-namespace BT_Steering
-{
-
-	//-----------------------------------------------------------------
-	// STEERING BEHAVIORS (IBehavior)
-	//-----------------------------------------------------------------
-	class BehaviorSteering : public IBehavior
+	BehaviorState EvadePurgeZone(Blackboard* pBlackboard)
 	{
-	public:
-		BehaviorSteering(ISteeringBehavior* pSteeringBehavior, std::string name)
-		: m_pSteeringBehavior(pSteeringBehavior)
-		, m_debugName(name)
-		{}
-
-		~BehaviorSteering() override
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
 		{
-			SAFE_DELETE(m_pSteeringBehavior);
+			return BehaviorState::Failure;
 		}
 
-		virtual BehaviorState Execute(Blackboard* pBlackboard) override
+		std::deque<Vector2>* pTargetPositions;
+		if (!pBlackboard->GetData(BB::TargetPositions, pTargetPositions))
 		{
-			//std::cout << m_debugName << "\n";
-
-			IExamInterface* pInterface;
-			if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
-			{
-				return BehaviorState::Failure;
-			}
-
-			SteeringPlugin_Output* pSteering;
-			if (!pBlackboard->GetData("Steering", pSteering))
-			{
-				return BehaviorState::Failure;
-			}
-
-			float deltaT;
-			if (!pBlackboard->GetData("DeltaT", deltaT))
-			{
-				return BehaviorState::Failure;
-			}
-
-			AgentInfo agentInfo = pInterface->Agent_GetInfo();
-			auto steering = m_pSteeringBehavior->CalculateSteering(deltaT, &agentInfo);
-			*pSteering = steering;
-
-			//Elite::Vector2 worldCenter{ pInterface->World_GetInfo().Center };
-			//Elite::Vector2 worldsize{ pInterface->World_GetInfo().Dimensions };
-			//
-			//Elite::Vector2 newDir = { -1,-1 };
-			//
-			//if (agentInfo.Position.x <= worldCenter.x - worldsize.x / 4 && agentInfo.Position.y <= worldCenter.y - worldsize.y / 4)
-			//{
-			//	newDir = Elite::Vector2{ worldCenter.x + worldsize.x / 2 - agentInfo.Position.x, worldCenter.y - worldsize.y / 2 - agentInfo.Position.y
-			//};
-			//}
-			//
-			//if(agentInfo.Position.x >= worldCenter.x + worldsize.x/4 && agentInfo.Position.y <= worldCenter.y - worldsize.y / 4)
-			//{
-			//	newDir = Elite::Vector2{ worldCenter.x - worldsize.x / 2 - agentInfo.Position.x, worldCenter.y + worldsize.y / 2 };
-			//}
-			//
-			//if(agentInfo.Position.x <= worldCenter.x - worldsize.x/4 && agentInfo.Position.y >= worldCenter.y + worldsize.y / 4)
-			//{
-			//	newDir = Elite::Vector2{ worldCenter.x + worldsize.x / 2 - agentInfo.Position.x,  worldCenter.y + worldsize.y / 2 - agentInfo.Position.y };
-			//}
-			//
-			//if(agentInfo.Position.x >= worldCenter.x + worldsize.x/4 && agentInfo.Position.y < worldCenter.y + worldsize.y / 4)
-			//{
-			//	newDir = Elite::Vector2{ worldCenter.x - worldsize.x / 2 - agentInfo.Position.x ,  worldCenter.y - worldsize.y / 2 - agentInfo.Position.y };
-			//}
-			//
-			//pSteering->LinearVelocity = newDir ;
-			//pSteering->LinearVelocity.Normalize();
-			//pSteering->LinearVelocity *= agentInfo.MaxLinearSpeed;
-			return BehaviorState::Success;
+			return BehaviorState::Failure;
 		}
 
-	protected:
-		ISteeringBehavior* m_pSteeringBehavior;
-		std::string m_debugName;
-	};
+		AgentInfo agentInfo = pInterface->Agent_GetInfo();
 
-	class BehaviorWander : public BehaviorSteering
-	{
-	public:
-		explicit BehaviorWander() : BehaviorSteering(new Wander(), "Wander")
-		{  }
-	};
+		PurgeZoneInfo pi;
+		pBlackboard->GetData(BB::PurgeZone, pi);
+
+		Vector2 pointOutside = (agentInfo.Position - pi.Center);
+		pointOutside = (pointOutside * (pi.Radius + 10.f) / pointOutside.Magnitude()) + pi.Center;
+
+		if (agentInfo.Position.Distance(pi.Center) < pointOutside.Distance(pi.Center))
+		{
+			BT_Utils::AddTarget(pTargetPositions, pointOutside);
+		}
+
+		return BehaviorState::Success;
+	}
 
 }

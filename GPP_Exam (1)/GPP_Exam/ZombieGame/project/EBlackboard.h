@@ -67,7 +67,7 @@ namespace Elite
 				m_BlackboardData[name] = new BlackboardField<T>(data);
 				return true;
 			}
-			printf("WARNING: Data '%s' of type '%s' already in Blackboard \n", name.c_str(), typeid(T).name());
+			//printf("WARNING: Data '%s' of type '%s' already in Blackboard \n", name.c_str(), typeid(T).name());
 			return false;
 		}
 
@@ -76,7 +76,7 @@ namespace Elite
 			auto it = m_BlackboardData.find(name);
 			if (it == m_BlackboardData.end())
 			{
-				printf("WARNING: Data '%s' not found in Blackboard \n", name.c_str());
+				//printf("WARNING: Data '%s' not found in Blackboard \n", name.c_str());
 				return false;
 			}
 			m_BlackboardData.erase(name);
@@ -96,7 +96,7 @@ namespace Elite
 					return true;
 				}
 			}
-			printf("WARNING: Data '%s' of type '%s' not found in Blackboard \n", name.c_str(), typeid(T).name());
+			//printf("WARNING: Data '%s' of type '%s' not found in Blackboard \n", name.c_str(), typeid(T).name());
 			return false;
 		}
 
@@ -119,7 +119,7 @@ namespace Elite
 				data = p->GetData();
 				return true;
 			}
-			printf("WARNING: Data '%s' of type '%s' not found in Blackboard \n", name.c_str(), typeid(T).name());
+			//printf("WARNING: Data '%s' of type '%s' not found in Blackboard \n", name.c_str(), typeid(T).name());
 			return false;
 		}
 

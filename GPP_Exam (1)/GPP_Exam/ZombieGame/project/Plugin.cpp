@@ -25,71 +25,89 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 	m_pBlackboard->AddData("Interface", m_pInterface);
 	m_pBehaviorTree = new BehaviorTree
 	(m_pBlackboard,
-	 new BehaviorSequence
-	 (
-		 {
+		new BehaviorSelector
+		(
+			{
+				new BehaviorSequence(
+					{
+						new BehaviorConditional(BT_Condition::IsPurgeZoneInFOV),
+						new BehaviorAction(BT_Action::EvadePurgeZone)
+					}
+				),
+			
+				new BehaviorSequence
+				(
+					{
 
-		 	 new BehaviorAction(BT_Action::Wander),
+						 new BehaviorAction(BT_Action::Wander),
 
-		 	//Eat if there is food and Energy is low
-			 new BehaviorSelector
-			 (
-				 {
-					 new BehaviorInvertConditional(BT_Condition::CheckEnergy),
-					 new BehaviorAction(BT_Action::Eat)
-				 }
-			 ),
+						 //Eat if there is food and Energy is low
+						  new BehaviorSelector
+						  (
+							  {
+								  new BehaviorInvertConditional(BT_Condition::CheckEnergy),
+								  new BehaviorAction(BT_Action::Eat)
+							  }
+						  ),
 
-			 //Use Medkit if available and Health is low
-			 new BehaviorSelector
-			 (
-				 {
-					 new BehaviorInvertConditional(BT_Condition::CheckHealth),
-					 new BehaviorAction(BT_Action::UseMedkit)
-				 }
-			 ),
+						 //Use Medkit if available and Health is low
+						 new BehaviorSelector
+						 (
+							 {
+								 new BehaviorInvertConditional(BT_Condition::CheckHealth),
+								 new BehaviorAction(BT_Action::UseMedkit)
+							 }
+						 ),
 
-			 //If Gun is available, check for enemy and shoot him
-			 new BehaviorMaskFailure( new BehaviorSequence
-			 (
-				 {
-					 new BehaviorConditional(BT_Condition::CheckForGunInInventory),
-					 new BehaviorAction(BT_Action::Turn),
-					 new BehaviorConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
-					 new BehaviorAction(BT_Action::FaceEnemy),
-					 new BehaviorAction(BT_Action::ShootEnemy)
-				 }
-			 )),
+						 //If Gun is available, check for enemy and shoot him
+						 new BehaviorMaskFailure(new BehaviorSequence
+						 (
+							 {
+								new BehaviorConditional(BT_Condition::CheckForGunInInventory),
+								new BehaviorAction(BT_Action::Turn),
+								new BehaviorConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
+								new BehaviorAction(BT_Action::FaceEnemy),
+								new BehaviorSelector
+							 	(
+									 {
+									 	new BehaviorAction(BT_Action::ShootEnemy),
+										new BehaviorAction(BT_Action::RunAway)
+									 }
+								)
+							 }
+						 )),
 
-			 //Check if there is an house in FOV, if so, go inside and collect loot
-			 new BehaviorSelector
-			 (
-				 {
-					 new BehaviorInvertConditional(BT_Condition::IsHouseInFOV),
-					 new BehaviorAction(BT_Action::MoveToHouse)
-				 }
-			 ),
+						 //Check if there is an house in FOV, if so, go inside and collect loot
+						 new BehaviorSelector
+						 (
+							 {
+								 new BehaviorInvertConditional(BT_Condition::IsHouseInFOV),
+								 new BehaviorAction(BT_Action::MoveToHouse)
+							 }
+						 ),
 
-			 new BehaviorSelector
-			 (
-				 {
-					 new BehaviorInvertConditional(BT_Condition::IsAgentInHouse),
-					 new BehaviorAction(BT_Action::LookForLoot)
-				 }
-			 ),
+						 new BehaviorSelector
+						 (
+							 {
+								 new BehaviorInvertConditional(BT_Condition::IsAgentInHouse),
+								 new BehaviorAction(BT_Action::LookForLoot)
+							 }
+						 ),
 
 
-			 //If loot in FOV, try to grab it, if too far, set TargetPos to move to loot
-			 new BehaviorSelector
-			 (
-				 {
-					 new BehaviorInvertConditional(BT_Condition::IsLootInFOV),
-					 new BehaviorAction(BT_Action::TryGrabLoot),
-					 new BehaviorAction(BT_Action::MoveToLoot)
-				 }
-			 )
-		 }
-	 )
+						 //If loot in FOV, try to grab it, if too far, set TargetPos to move to loot
+						 new BehaviorSelector
+						 (
+							 {
+								 new BehaviorInvertConditional(BT_Condition::IsLootInFOV),
+								 new BehaviorAction(BT_Action::TryGrabLoot),
+								 new BehaviorAction(BT_Action::MoveToLoot)
+							 }
+						 )
+					 }
+				 )
+			}
+		)	
 	);
 
 }
@@ -126,6 +144,7 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
 	params.Seed = 34;
+	params.SpawnZombieOnRightClick = true;
 }
 
 //Only Active in DEBUG Mode
@@ -192,6 +211,7 @@ void Plugin::Update(float dt)
 		m_pInterface->Inventory_GetItem(m_InventorySlot, info);
 		std::cout << (int)info.Type << std::endl;
 	}
+
 }
 
 SteeringPlugin_Output Plugin::UpdateSteering(float dt)
@@ -202,6 +222,7 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	m_pBlackboard->SetData(BB::DeltaT, dt);
 	m_pBlackboard->SetData(BB::AngularVelocity, 0.f);
 	m_pBlackboard->SetData(BB::TargetPositions, &m_TargetPositions);
+	m_pBlackboard->SetData(BB::CanRun, false);
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	auto agentInfo = m_pInterface->Agent_GetInfo();
@@ -211,10 +232,25 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	// Erase all target points near to agent
 	for (auto it = m_TargetPositions.begin(); it != m_TargetPositions.end();)
 	{
-		if ((* it).Distance(agentInfo.Position) <= agentInfo.GrabRange * .8f)
+		if ((* it).Distance(agentInfo.Position) <= agentInfo.GrabRange * .8f && m_TargetPositions.size() > 1)
 			it = m_TargetPositions.erase(it);
 		else
 			++it;
+	}
+
+	//Erase targetPositions in walls
+	for (HouseInfo hi : GetHousesInFOV())
+	{
+		if (m_TargetPositions.size()>0)
+		{
+			auto p = m_TargetPositions[0];
+			auto dx = hi.Size.x*.5f - std::abs(p.x - hi.Center.x);
+			auto dy = hi.Size.y*.5f - std::abs(p.y - hi.Center.y);
+			if (dx >= -1 && dx < 3 || dy>=-1 && dy<3)
+			{
+				m_TargetPositions.erase(m_TargetPositions.begin());
+			}
+		}
 	}
 
 	//Set steering data
@@ -234,8 +270,10 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 		steering.LinearVelocity = Elite::ZeroVector2;
 	}
 
-	steering.RunMode = m_CanRun; //If RunMode is True > MaxLinSpd is increased for a limited time (till your stamina runs out)
-
+	if (m_pBlackboard->GetData(BB::CanRun, m_CanRun))
+	{
+		steering.RunMode = m_CanRun; //If RunMode is True > MaxLinSpd is increased for a limited time (till your stamina runs out)
+	}
 
 	//@End (Demo Purposes)
 	return steering;
