@@ -166,7 +166,6 @@ BehaviorState BehaviorConditional::Execute(Blackboard* pBlackBoard)
 		m_CurrentState = BehaviorState::Success;
 		return m_CurrentState;
 	default:
-	case false:
 		m_CurrentState = m_CurrentState = BehaviorState::Failure;
 		return m_CurrentState;
 	}
@@ -188,9 +187,8 @@ BehaviorState BehaviorTimedConditional::Execute(Blackboard* pBlackBoard)
 	case true:
 		m_isRunning = false;
 		m_CurrentState = BehaviorState::Success;
-		return m_CurrentState;
+		break;
 	default:
-	case false:
 		time_t now = time(nullptr);
 		if (now-m_startTime >= m_timeoutSeconds)
 		{
@@ -201,8 +199,9 @@ BehaviorState BehaviorTimedConditional::Execute(Blackboard* pBlackBoard)
 		{
 			m_CurrentState = m_CurrentState = BehaviorState::Running;
 		}
-		return m_CurrentState;
+		break;
 	}
+	return m_CurrentState;
 
 }
 //-----------------------------------------------------------------

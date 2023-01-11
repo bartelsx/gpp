@@ -26,7 +26,7 @@ public:
 private:
 	//Interface, used to request data from/perform actions with the AI Framework
 	IExamInterface* m_pInterface = nullptr;
-	Elite::Blackboard* m_pBlackboard;
+	Elite::Blackboard* m_pBlackboard = nullptr;
 	std::vector<HouseInfo> GetHousesInFOV() const;
 	std::vector<EntityInfo> GetEntitiesInFOV() const;
 
@@ -39,7 +39,7 @@ private:
 	bool m_RemoveItem = false; //Demo purpose
 	float m_AngSpeed = 0.f; //Demo purpose
 
-	Elite::BehaviorTree* m_pBehaviorTree;
+	Elite::BehaviorTree* m_pBehaviorTree = nullptr;
 
 	UINT m_InventorySlot = 0;
 };

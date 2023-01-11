@@ -604,13 +604,13 @@ namespace BT_Action
 		WorldInfo worldInfo = pInterface->World_GetInfo();
 		if (pTargetPositions->size() < 1)
 		{
-			float angles[] = { 90.f, 180.f, 270.f, 0.f, 225.f, 135.f, 315.f, 45.f  };
+			float angles[] = {90.f, 180.f, 270.f, 0.f, 225.f, 135.f, 315.f, 45.f  };
 
 			float d = worldInfo.Dimensions.Magnitude() / 4.f;
 
 			for (const float angle : angles)
 			{
-				const float angleRadians = angle / 180.f * M_PI;
+				const float angleRadians = angle / 180.f * float(M_PI);
 
 				BT_Utils::AddTarget(pTargetPositions, worldInfo.Center + Vector2{d * std::cosf(angleRadians), d * std::sinf(angleRadians)});
 			}
@@ -647,23 +647,6 @@ namespace BT_Action
 		return result;
 	}
 
-	BehaviorState RunAway(Blackboard* pBlackboard)
-	{
-		IExamInterface* pInterface;
-		if (!pBlackboard->GetData(BB::Interface, pInterface) || pInterface == nullptr)
-		{
-			return BehaviorState::Failure;
-		}
-
-		EnemyInfo ei;
-		if (!pBlackboard->GetData(BB::Enemy, ei))
-		{
-			return BehaviorState::Failure;
-		}
-
-		AgentInfo agentInfo = pInterface->Agent_GetInfo();
-
-	}
 
 	BehaviorState Turn(Blackboard* pBlackboard)
 	{

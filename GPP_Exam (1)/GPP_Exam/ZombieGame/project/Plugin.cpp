@@ -67,13 +67,9 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 								new BehaviorAction(BT_Action::Turn),
 								new BehaviorConditional([](Blackboard* b) {return BT_Condition::IsSlowEnemyInFOV(b) || BT_Condition::IsFastEnemyInFOV(b); }),
 								new BehaviorAction(BT_Action::FaceEnemy),
-								new BehaviorSelector
-							 	(
-									 {
-									 	new BehaviorAction(BT_Action::ShootEnemy),
-										new BehaviorAction(BT_Action::RunAway)
-									 }
-								)
+							 	new BehaviorAction(BT_Action::ShootEnemy)
+									 
+								
 							 }
 						 )),
 
@@ -143,7 +139,7 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
-	params.Seed = 34;
+	params.Seed = 4;
 	params.SpawnZombieOnRightClick = true;
 }
 
@@ -232,14 +228,14 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	// Erase all target points near to agent
 	for (auto it = m_TargetPositions.begin(); it != m_TargetPositions.end();)
 	{
-		if ((* it).Distance(agentInfo.Position) <= agentInfo.GrabRange * .8f && m_TargetPositions.size() > 1)
+		if ((* it).Distance(agentInfo.Position) <= agentInfo.GrabRange * .8f && m_TargetPositions.size() >= 1)
 			it = m_TargetPositions.erase(it);
 		else
 			++it;
 	}
 
 	//Erase targetPositions in walls
-	for (HouseInfo hi : GetHousesInFOV())
+	for (const HouseInfo hi : GetHousesInFOV())
 	{
 		if (m_TargetPositions.size()>0)
 		{
@@ -254,14 +250,17 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	}
 
 	//Set steering data
-	nextTargetPos = m_TargetPositions[0];
-	nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(nextTargetPos);
-	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
-	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
-	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
-	m_pBlackboard->GetData(BB::AngularVelocity, steering.AngularVelocity);
-	steering.AutoOrient = steering.AngularVelocity == 0.f;
+	if(!m_TargetPositions.empty())
+	{
+		nextTargetPos = m_TargetPositions[0];
+		nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(nextTargetPos);
+		steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
+		steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
+		steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
+		m_pBlackboard->GetData(BB::AngularVelocity, steering.AngularVelocity);
+		steering.AutoOrient = steering.AngularVelocity == 0.f;
 
+	}
 	//std::cout << "Target Point: " << nextTargetPos.x << ", " << nextTargetPos.y << ", " << m_TargetPositions.size() << " positions in queue, agent location: " << agentInfo.Position.x << ", " << agentInfo.Position.y << "\n";
 	std::cout << "AngularVelocity : " << steering.AngularVelocity << ", AutoOrient : " << steering.AutoOrient << "\n";
 
